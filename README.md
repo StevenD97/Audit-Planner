@@ -167,5 +167,12 @@ tests/                   Vitest unit tests
   create real audit data, reload the page (encrypted autosave), reject a
   wrong passphrase, accept the correct one, and confirm the data survived
   the round trip intact.
-- `npm run package` (installer generation) was not run here — see
-  `docs/ROADMAP.md` "Build & packaging notes".
+- `npm run package` (Windows installer generation via electron-builder) was
+  run here and produces `release/Audit Planner Setup <version>.exe` (NSIS
+  installer) plus `release/win-unpacked/` (the unpacked app). It was smoke-tested
+  in this sandbox under Wine + Xvfb: the packaged exe launches and spawns
+  Electron's real multi-process set (main, GPU, renderer, network service),
+  confirming the build is genuinely functional and not just a valid file
+  format. The installer is unsigned (no code-signing certificate), so Windows
+  SmartScreen will show an "unrecognized app" warning on first run — see
+  `docs/ROADMAP.md` for the signing tradeoffs.

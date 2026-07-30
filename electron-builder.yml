@@ -2,6 +2,10 @@ appId: com.audit-planner.app
 productName: Audit Planner
 directories:
   output: release
+# No auto-update server exists for this app; disable electron-builder's
+# publish/update-info generation entirely rather than leaving it half
+# configured against a repository that isn't set up for it.
+publish: null
 files:
   - out/**/*
   - package.json
