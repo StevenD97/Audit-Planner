@@ -9,6 +9,7 @@ import type {
   ReadinessSnapshot
 } from '@shared/types'
 import type { WorkspaceState } from '@shared/ipc'
+import { getPlatformApi, isElectron, tryRestoreAutosavedWorkspace } from '../platform'
 
 interface Store {
   workspace: WorkspaceState | null
@@ -60,33 +61,38 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
 
   async init() {
     set({ loading: true })
-    const state = await window.api.workspaceNew()
+    // In the browser build, pick up whatever was last autosaved to this
+    // browser's IndexedDB before defaulting to a brand-new workspace. The
+    // desktop build has no such concept — it always starts a fresh in-memory
+    // workspace and relies on Open/Save against real files.
+    const restored = isElectron() ? null : await tryRestoreAutosavedWorkspace()
+    const state = restored ?? (await getPlatformApi().workspaceNew())
     set({ workspace: state, loading: false })
   },
 
   async newWorkspace() {
-    const state = await window.api.workspaceNew()
+    const state = await getPlatformApi().workspaceNew()
     set({ workspace: state, currentAuditProjectId: null })
   },
 
   async openWorkspace() {
-    const result = await window.api.workspaceOpen()
+    const result = await getPlatformApi().workspaceOpen()
     if (result.canceled || !result.state) return
     set({ workspace: result.state, currentAuditProjectId: null })
   },
 
   async saveWorkspace() {
-    const result = await window.api.workspaceSave()
+    const result = await getPlatformApi().workspaceSave()
     if (!result.canceled) get().setToast(`Saved: ${result.filePath}`)
   },
 
   async saveWorkspaceAs() {
-    const result = await window.api.workspaceSaveAs()
+    const result = await getPlatformApi().workspaceSaveAs()
     if (!result.canceled) get().setToast(`Saved: ${result.filePath}`)
   },
 
   async refresh() {
-    const state = await window.api.workspaceGetState()
+    const state = await getPlatformApi().workspaceGetState()
     set({ workspace: state })
   },
 
@@ -121,7 +127,7 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
       createdAt: nowIso(),
       updatedAt: nowIso()
     }
-    await window.api.entityUpsert('audit_projects', project.id, { status: project.status, updatedAt: project.updatedAt }, project)
+    await getPlatformApi().entityUpsert('audit_projects', project.id, { status: project.status, updatedAt: project.updatedAt }, project)
     await get().refresh()
     set({ currentAuditProjectId: project.id })
     return project
@@ -132,32 +138,32 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
     const existing = ws?.auditProjects.find((p) => p.id === id)
     if (!existing) return
     const updated: AuditProject = { ...existing, ...patch, updatedAt: nowIso() }
-    await window.api.entityUpsert('audit_projects', id, { status: updated.status, updatedAt: updated.updatedAt }, updated)
+    await getPlatformApi().entityUpsert('audit_projects', id, { status: updated.status, updatedAt: updated.updatedAt }, updated)
     await get().refresh()
   },
 
   async replaceProgrammeSlots(auditProjectId, slots) {
     const ws = get().workspace
     const existingIds = (ws?.programmeSlots ?? []).filter((s) => s.auditProjectId === auditProjectId).map((s) => s.id)
-    for (const id of existingIds) await window.api.entityRemove('programme_slots', id)
-    await window.api.entityBulkUpsert(
+    for (const id of existingIds) await getPlatformApi().entityRemove('programme_slots', id)
+    await getPlatformApi().entityBulkUpsert(
       slots.map((s) => ({ table: 'programme_slots' as const, id: s.id, row: { auditProjectId: s.auditProjectId }, data: s }))
     )
     await get().refresh()
   },
 
   async upsertProgrammeSlot(slot) {
-    await window.api.entityUpsert('programme_slots', slot.id, { auditProjectId: slot.auditProjectId }, slot)
+    await getPlatformApi().entityUpsert('programme_slots', slot.id, { auditProjectId: slot.auditProjectId }, slot)
     await get().refresh()
   },
 
   async removeProgrammeSlot(id) {
-    await window.api.entityRemove('programme_slots', id)
+    await getPlatformApi().entityRemove('programme_slots', id)
     await get().refresh()
   },
 
   async bulkUpsertChecklistItems(items) {
-    await window.api.entityBulkUpsert(
+    await getPlatformApi().entityBulkUpsert(
       items.map((i) => ({
         table: 'checklist_items' as const,
         id: i.id,
@@ -169,7 +175,7 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
   },
 
   async upsertChecklistItem(item) {
-    await window.api.entityUpsert(
+    await getPlatformApi().entityUpsert(
       'checklist_items',
       item.id,
       { auditProjectId: item.auditProjectId, clauseId: item.clauseId },
@@ -179,12 +185,12 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
   },
 
   async removeChecklistItem(id) {
-    await window.api.entityRemove('checklist_items', id)
+    await getPlatformApi().entityRemove('checklist_items', id)
     await get().refresh()
   },
 
   async bulkUpsertEvidenceItems(items) {
-    await window.api.entityBulkUpsert(
+    await getPlatformApi().entityBulkUpsert(
       items.map((i) => ({
         table: 'evidence_plan_items' as const,
         id: i.id,
@@ -196,7 +202,7 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
   },
 
   async upsertEvidenceItem(item) {
-    await window.api.entityUpsert(
+    await getPlatformApi().entityUpsert(
       'evidence_plan_items',
       item.id,
       { auditProjectId: item.auditProjectId, clauseId: item.clauseId },
@@ -206,12 +212,12 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
   },
 
   async removeEvidenceItem(id) {
-    await window.api.entityRemove('evidence_plan_items', id)
+    await getPlatformApi().entityRemove('evidence_plan_items', id)
     await get().refresh()
   },
 
   async upsertGapAssessment(item) {
-    await window.api.entityUpsert(
+    await getPlatformApi().entityUpsert(
       'gap_assessments',
       item.id,
       { auditProjectId: item.auditProjectId, clauseId: item.clauseId, rating: item.rating },
@@ -221,7 +227,7 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
   },
 
   async addReadinessSnapshot(snapshot) {
-    await window.api.entityUpsert(
+    await getPlatformApi().entityUpsert(
       'readiness_snapshots',
       snapshot.id,
       { auditProjectId: snapshot.auditProjectId, takenAt: snapshot.takenAt },

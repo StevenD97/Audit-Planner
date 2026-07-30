@@ -197,3 +197,58 @@ Generator, etc. are all driven by `standard_id`, not hard-coded to 14001/45001.
 The Audit Planner's "Combined audit" selector is a multi-select over
 `standards`, currently constrained to the two seeded standards in the MVP UI
 copy, but the underlying engine already supports N standards.
+
+## 9. Web deployment (running without Electron)
+
+The original design targeted a desktop-only tool (§1–8). A browser-hosted
+version was added afterwards so the app is reachable from a work browser
+without installing anything, via GitHub Pages. This did **not** require
+rewriting any feature screen — only the persistence/export layer, isolated
+behind one interface.
+
+**The abstraction.** `src/shared/ipc.ts` already defined a narrow contract
+(`PreloadApi`: `workspaceNew`, `workspaceOpen`, `workspaceSave`,
+`entityUpsert`, `exportDocument`, …) that every feature screen calls through
+a Zustand store — none of them touch `window.api` or the filesystem
+directly. `src/renderer/src/platform/index.ts` now picks an implementation
+at runtime:
+
+- **Electron present** (`window.api` exists, injected by `preload/index.ts`
+  via `contextBridge`) → use it, unchanged from the original design.
+- **Plain browser** (`window.api` is `undefined`) → use
+  `browserPlatformApi.ts`, which implements the exact same interface using:
+  - **`sql.js` running in the browser tab itself** (the same WASM SQLite
+    build used on desktop, loaded via a Vite `?url` asset import instead of
+    a Node `fs` path) for the actual database — `src/shared/workspaceEntities.ts`
+    holds the SQL that both platforms share verbatim, so the schema never
+    drifts between them.
+  - **IndexedDB** for autosave (persisting the exported SQLite bytes so the
+    workspace survives a page reload on the same browser/device).
+  - **A hidden `<input type="file">`** standing in for the native Open
+    dialog, and **`Blob` + a synthetic `<a download>` click** standing in
+    for the native Save dialog / Excel-PDF export dialogs.
+  - `exceljs` and `pdfmake` both ship browser-targeted bundles already
+    (`exceljs`'s `package.json#browser` field, `pdfmake/build/pdfmake`),
+    so the export logic is a close port of `src/main/export/*.ts` rather
+    than a new dependency.
+
+**What this does *not* give you.** Browser storage is per-browser,
+per-device — there is no server, so the same link opened on a different
+computer starts a fresh, empty workspace. That's an explicit, deliberate
+scope choice (see the "Data storage" decision in the conversation that
+introduced this), not a limitation to work around silently: the UI's
+Save As / Open flow is how a workspace moves between devices (download the
+`.iaap` file, upload it elsewhere), same as e-mailing a spreadsheet.
+Promoting this to real shared/multi-user storage means adding an actual
+backend + database — a materially bigger project than the browser port,
+and out of scope for this change.
+
+**Build & hosting.** `vite.config.web.ts` builds the renderer standalone
+(no Electron main/preload) to `dist-web/`, using a relative `base: './'` so
+the same build works whether it's served from a domain root or a GitHub
+Pages project subpath — paired with the app's existing `HashRouter`, which
+avoids needing server-side rewrite rules for client-side routes.
+`.github/workflows/deploy-pages.yml` builds and publishes it on every push.
+The one-time manual step (enabling "GitHub Actions" as the Pages source in
+repo Settings) is a repository-admin action outside what a workflow file
+can itself turn on.

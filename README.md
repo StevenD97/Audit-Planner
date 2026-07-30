@@ -27,6 +27,9 @@ Electron 31 + React 18 + TypeScript + Vite (via `electron-vite`), Tailwind
 CSS, Zustand, SQLite via `sql.js` (WASM, no native build step), `exceljs` /
 `pdfmake` for exports. See `docs/ARCHITECTURE.md` §3 for the full rationale.
 
+The same renderer source also builds as a **plain static web app** (no
+Electron) — see "Web build & deployment" below.
+
 ## Getting started
 
 ```bash
@@ -37,12 +40,44 @@ npm run dev        # launches the Electron app in development mode
 Other scripts:
 
 ```bash
-npm run build       # production build of main/preload/renderer to out/
-npm run start       # preview the production build
+npm run build       # production build of main/preload/renderer to out/ (desktop)
+npm run start       # preview the desktop production build
+npm run build:web   # production build of the browser-only app to dist-web/
+npm run dev:web     # dev server for the browser-only app
+npm run preview:web # preview the browser-only production build
 npm run typecheck   # TypeScript project references, no emit
 npm run test        # Vitest unit tests (knowledge base, engines, export generators)
 npm run package     # electron-builder installers (see electron-builder.yml)
 ```
+
+## Web build & deployment
+
+Everything — the knowledge base, engines, and all ten feature screens —
+runs identically in a plain browser tab, no Electron required. A small
+platform abstraction (`src/renderer/src/platform`) swaps out Electron's IPC
+bridge for a browser-native equivalent at runtime:
+
+| Concern | Desktop (Electron) | Browser (web build) |
+|---|---|---|
+| Storage | SQLite file on disk (`.iaap`), via `sql.js` in the main process | SQLite **in the browser tab itself** (`sql.js` compiled to WebAssembly), autosaved to IndexedDB |
+| Save | Native Save/Save As dialog, writes the `.iaap` file | **Save** persists to this browser's IndexedDB; **Save As** downloads a `.iaap` file you can back up or move to another device |
+| Open | Native Open dialog | A file picker lets you upload a previously-downloaded `.iaap` file |
+| Export (Excel/PDF) | Written straight to disk via a native Save dialog | Generated in the browser and downloaded like any file |
+
+This means data is **local to that browser/device** — there's no shared
+server, so opening the link on a different computer starts a fresh
+workspace unless you download a `.iaap` file from one and upload it on the
+other. See `docs/ARCHITECTURE.md` §9 for the full rationale and the tradeoffs
+of moving to shared/multi-user storage later.
+
+**Deploying to GitHub Pages:** `.github/workflows/deploy-pages.yml` builds
+`npm run build:web` and publishes `dist-web/` on every push to `main` (or
+this branch), or on demand via the Actions tab's "Run workflow" button.
+
+**One-time setup required** (repo admin, not something a workflow file can
+turn on by itself): go to **Settings → Pages → Build and deployment →
+Source** and select **"GitHub Actions"**. Once that's set, the workflow run
+will publish to `https://<org-or-user>.github.io/<repo>/`.
 
 ## Using the app
 
@@ -81,7 +116,7 @@ docs/                    Phase 1/6 design deliverables
 src/shared/              Standard-agnostic domain types, knowledge base, engines (scoring, scheduler, trail builder, recommender)
 src/main/                Electron main process: SQLite workspace store, IPC handlers, Excel/PDF export generators
 src/preload/             contextBridge-based typed API surface exposed to the renderer
-src/renderer/            React app: layout, routing, feature screens, Zustand store
+src/renderer/            React app: layout, routing, feature screens, Zustand store, platform/ (Electron vs. browser persistence + export)
 tests/                   Vitest unit tests
 ```
 

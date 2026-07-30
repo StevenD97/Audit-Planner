@@ -3,6 +3,7 @@ import { AuditProjectPicker, useCurrentAuditProject } from '../../components/com
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { buildAuditPlanDoc, buildScheduleDoc, buildPrepPackDoc, buildGapReportDoc } from './buildReports'
 import type { ExportDocument } from '@shared/export'
+import { getPlatformApi } from '../../platform'
 
 export default function ReportingPage(): JSX.Element {
   const project = useCurrentAuditProject()
@@ -44,7 +45,7 @@ export default function ReportingPage(): JSX.Element {
 
   async function exportAs(format: 'xlsx' | 'pdf', build: () => ExportDocument, fileBase: string): Promise<void> {
     const doc = build()
-    await window.api.exportDocument(format, doc, fileBase.replace(/[^a-z0-9-_ ]/gi, ''))
+    await getPlatformApi().exportDocument(format, doc, fileBase.replace(/[^a-z0-9-_ ]/gi, ''))
   }
 
   return (

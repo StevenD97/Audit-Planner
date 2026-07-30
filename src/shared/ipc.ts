@@ -8,7 +8,7 @@ import type {
   ReportRecord
 } from './types'
 import type { ExportDocument } from './export'
-import type { EntityTable } from '../main/db/workspace'
+import type { EntityTable } from './workspaceEntities'
 
 export interface WorkspaceState {
   filePath: string | null
