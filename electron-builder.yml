@@ -1,0 +1,19 @@
+appId: com.audit-planner.app
+productName: Audit Planner
+directories:
+  output: release
+files:
+  - out/**/*
+  - package.json
+win:
+  target: nsis
+mac:
+  target: dmg
+  category: public.app-category.business
+linux:
+  target: AppImage
+  category: Office
+# No custom icon is bundled in this build (none was supplied); electron-builder
+# falls back to its default icon. Add build/icon.{ico,icns,png} and an `icon:`
+# entry per platform above when branding assets are available — see
+# docs/ROADMAP.md "Post-MVP roadmap".

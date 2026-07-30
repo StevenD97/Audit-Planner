@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+dist-electron/
+release/
+.tmp/
+*.iaap
+.DS_Store
+*.log
+coverage/
