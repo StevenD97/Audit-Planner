@@ -12,6 +12,8 @@ import type { EntityTable } from './workspaceEntities'
 
 export interface WorkspaceState {
   filePath: string | null
+  /** Whether the *currently open* workspace has a passphrase set for its saves. */
+  isEncrypted: boolean
   auditProjects: AuditProject[]
   programmeSlots: ProgrammeSlot[]
   checklistItems: ChecklistItem[]
@@ -24,6 +26,8 @@ export interface WorkspaceState {
 export interface OpenResult {
   canceled: boolean
   state?: WorkspaceState
+  /** True when the picked/uploaded file is passphrase-protected — call `workspaceUnlock` next. */
+  needsPassphrase?: boolean
 }
 
 export interface SaveAsResult {
@@ -36,13 +40,24 @@ export interface ExportResult {
   filePath?: string
 }
 
+export interface UnlockResult {
+  success: boolean
+  state?: WorkspaceState
+  /** Human-readable reason the unlock failed (wrong passphrase, no pending file, etc). */
+  error?: string
+}
+
 /** The typed surface exposed on `window.api` by the preload bridge. */
 export interface PreloadApi {
   workspaceNew(): Promise<WorkspaceState>
   workspaceOpen(): Promise<OpenResult>
+  /** Call after `workspaceOpen`/`workspaceUnlock` reports `needsPassphrase`. */
+  workspaceUnlock(passphrase: string): Promise<UnlockResult>
   workspaceSave(): Promise<SaveAsResult>
   workspaceSaveAs(): Promise<SaveAsResult>
   workspaceGetState(): Promise<WorkspaceState>
+  /** Sets (or, passing null, removes) passphrase protection for the currently open workspace's future saves. */
+  workspaceSetPassphrase(passphrase: string | null): Promise<{ ok: boolean }>
   entityUpsert(table: EntityTable, id: string, row: Record<string, unknown>, data: unknown): Promise<void>
   entityBulkUpsert(
     items: { table: EntityTable; id: string; row: Record<string, unknown>; data: unknown }[]
@@ -54,9 +69,11 @@ export interface PreloadApi {
 export const IPC_CHANNELS = {
   workspaceNew: 'workspace:new',
   workspaceOpen: 'workspace:open',
+  workspaceUnlock: 'workspace:unlock',
   workspaceSave: 'workspace:save',
   workspaceSaveAs: 'workspace:saveAs',
   workspaceGetState: 'workspace:getState',
+  workspaceSetPassphrase: 'workspace:setPassphrase',
   entityUpsert: 'entity:upsert',
   entityBulkUpsert: 'entity:bulkUpsert',
   entityRemove: 'entity:remove',

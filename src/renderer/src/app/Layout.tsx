@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useWorkspaceStore } from '../store/workspaceStore'
 import AiAssistantPanel from '../features/ai-assistant/AiAssistantPanel'
+import PassphraseModal from '../components/PassphraseModal'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
@@ -24,6 +25,7 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
   const toast = useWorkspaceStore((s) => s.toast)
   const aiPanelOpen = useWorkspaceStore((s) => s.aiPanelOpen)
   const setAiPanelOpen = useWorkspaceStore((s) => s.setAiPanelOpen)
+  const openSetPassphraseModal = useWorkspaceStore((s) => s.openSetPassphraseModal)
   const { newWorkspace, openWorkspace, saveWorkspace, saveWorkspaceAs } = useWorkspaceStore()
   const navigate = useNavigate()
 
@@ -105,6 +107,16 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
             <button className="btn-ghost" onClick={() => saveWorkspace()}>
               Save
             </button>
+            <button className="btn-ghost" onClick={() => saveWorkspaceAs()} title="Download/export a copy of this workspace">
+              Save As
+            </button>
+            <button
+              className="btn-ghost"
+              onClick={() => openSetPassphraseModal()}
+              title={workspace?.isEncrypted ? 'This workspace is passphrase-protected' : 'Protect this workspace with a passphrase'}
+            >
+              {workspace?.isEncrypted ? '🔒 Protected' : '🔓 Unprotected'}
+            </button>
             <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{fileName}</span>
           </div>
           <form onSubmit={onSearchSubmit} className="w-96">
@@ -127,6 +139,8 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
       </div>
 
       {aiPanelOpen && <AiAssistantPanel onClose={() => setAiPanelOpen(false)} />}
+
+      <PassphraseModal />
 
       {toast && (
         <div className="fixed bottom-4 right-4 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">

@@ -6,9 +6,12 @@ import type { EntityTable } from '../main/db/workspace'
 const api: PreloadApi = {
   workspaceNew: () => ipcRenderer.invoke(IPC_CHANNELS.workspaceNew),
   workspaceOpen: () => ipcRenderer.invoke(IPC_CHANNELS.workspaceOpen),
+  workspaceUnlock: (passphrase: string) => ipcRenderer.invoke(IPC_CHANNELS.workspaceUnlock, passphrase),
   workspaceSave: () => ipcRenderer.invoke(IPC_CHANNELS.workspaceSave),
   workspaceSaveAs: () => ipcRenderer.invoke(IPC_CHANNELS.workspaceSaveAs),
   workspaceGetState: () => ipcRenderer.invoke(IPC_CHANNELS.workspaceGetState),
+  workspaceSetPassphrase: (passphrase: string | null) =>
+    ipcRenderer.invoke(IPC_CHANNELS.workspaceSetPassphrase, passphrase),
   entityUpsert: (table: EntityTable, id, row, data) =>
     ipcRenderer.invoke(IPC_CHANNELS.entityUpsert, table, id, row, data),
   entityBulkUpsert: (items) => ipcRenderer.invoke(IPC_CHANNELS.entityBulkUpsert, items),

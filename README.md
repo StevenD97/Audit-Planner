@@ -79,6 +79,23 @@ turn on by itself): go to **Settings → Pages → Build and deployment →
 Source** and select **"GitHub Actions"**. Once that's set, the workflow run
 will publish to `https://<org-or-user>.github.io/<repo>/`.
 
+## Passphrase protection (encryption at rest)
+
+If a workspace holds anything sensitive, click **🔓 Unprotected** in the
+toolbar (or just start typing when the app offers it on a new workspace)
+to set a passphrase. From then on, everything saved to disk (desktop
+`.iaap` file) or to the browser (IndexedDB autosave) is encrypted with
+AES-256-GCM, key-derived from your passphrase via PBKDF2 — see
+`docs/ARCHITECTURE.md` §10 for the exact design and, importantly, **what
+this does and doesn't protect against**. Two things worth knowing up front:
+
+- **There is no password recovery.** The passphrase is never stored
+  anywhere — lose it, and that workspace's data is gone. Keep it in a real
+  password manager.
+- **This is encryption at rest, not a login.** Anyone with access to the
+  app while it's open and unlocked sees everything. It protects a copied
+  file or a stolen disk, not a shared, already-unlocked session.
+
 ## Using the app
 
 1. **New Audit** (or `Ctrl/Cmd+N`) creates an in-memory workspace — save it
@@ -129,5 +146,13 @@ tests/                   Vitest unit tests
   Chromium DevTools Protocol) — audit creation, programme auto-generation,
   clause explorer, checklist/evidence generation, gap assessment, audit
   trails and the AI Assistant were all exercised with zero console errors.
+- The passphrase-protection feature was verified two ways: `tests/mainWorkspace.test.ts`
+  drives the real desktop `Workspace` class against real files on disk
+  (plain→encrypted save, correct/incorrect passphrase on open, removing
+  protection, opening a pre-existing unencrypted file), and a full
+  browser-driven pass confirmed the actual UI flow — protect a workspace,
+  create real audit data, reload the page (encrypted autosave), reject a
+  wrong passphrase, accept the correct one, and confirm the data survived
+  the round trip intact.
 - `npm run package` (installer generation) was not run here — see
   `docs/ROADMAP.md` "Build & packaging notes".

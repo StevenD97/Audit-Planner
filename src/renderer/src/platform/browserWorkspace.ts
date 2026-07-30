@@ -5,9 +5,11 @@ import initSqlJs from 'sql.js/dist/sql-wasm.js'
 // src/main/db/workspace.ts for the Node-side equivalent.
 import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 import { SqlWorkspaceCore, type EntityTable } from '@shared/workspaceEntities'
+import { encryptBytes, decryptBytes, isEncrypted, NeedsPassphraseError } from '@shared/crypto'
 import { idbGet, idbSet } from './idb'
 
 export type { EntityTable }
+export { NeedsPassphraseError }
 
 const AUTOSAVE_KEY = 'current-workspace'
 
@@ -24,33 +26,67 @@ export class BrowserWorkspace {
   private constructor(
     private core: SqlWorkspaceCore,
     /** Display-only name; there is no real filesystem path in a browser. */
-    public displayName: string | null
+    public displayName: string | null,
+    /** Held only in memory for this tab's lifetime; never written to IndexedDB or a file. */
+    private passphrase: string | null
   ) {}
 
   static async createNew(): Promise<BrowserWorkspace> {
     const SQL = await loadSqlJs()
-    return new BrowserWorkspace(new SqlWorkspaceCore(new SQL.Database()), null)
+    return new BrowserWorkspace(new SqlWorkspaceCore(new SQL.Database()), null, null)
   }
 
-  static async fromBytes(bytes: Uint8Array, displayName: string): Promise<BrowserWorkspace> {
+  /**
+   * Loads an uploaded/picked file's bytes. If passphrase-protected and none
+   * supplied, throws `NeedsPassphraseError` carrying the raw bytes so the
+   * caller can prompt and retry via `fromDecryptedBytes`.
+   */
+  static async fromBytes(bytes: Uint8Array, displayName: string, passphrase?: string): Promise<BrowserWorkspace> {
+    if (isEncrypted(bytes)) {
+      if (!passphrase) throw new NeedsPassphraseError(bytes)
+      const decrypted = await decryptBytes(bytes, passphrase)
+      return BrowserWorkspace.fromDecryptedBytes(decrypted, displayName, passphrase)
+    }
+    return BrowserWorkspace.fromDecryptedBytes(bytes, displayName, null)
+  }
+
+  static async fromDecryptedBytes(
+    bytes: Uint8Array,
+    displayName: string | null,
+    passphrase: string | null
+  ): Promise<BrowserWorkspace> {
     const SQL = await loadSqlJs()
-    return new BrowserWorkspace(new SqlWorkspaceCore(new SQL.Database(bytes)), displayName)
+    return new BrowserWorkspace(new SqlWorkspaceCore(new SQL.Database(bytes)), displayName, passphrase)
   }
 
-  /** Reload whatever was last autosaved to this browser's IndexedDB, if anything. */
+  /**
+   * Reloads whatever was last autosaved to this browser's IndexedDB, if
+   * anything. Throws `NeedsPassphraseError` the same way `fromBytes` does
+   * when the autosaved copy is passphrase-protected.
+   */
   static async fromAutosave(): Promise<BrowserWorkspace | null> {
     const saved = await idbGet<{ bytes: Uint8Array; displayName: string | null }>(AUTOSAVE_KEY)
     if (!saved) return null
-    const SQL = await loadSqlJs()
-    return new BrowserWorkspace(new SqlWorkspaceCore(new SQL.Database(saved.bytes)), saved.displayName)
+    if (isEncrypted(saved.bytes)) throw new NeedsPassphraseError(saved.bytes)
+    return BrowserWorkspace.fromDecryptedBytes(saved.bytes, saved.displayName, null)
   }
 
-  export(): Uint8Array {
-    return this.core.export()
+  get isEncrypted(): boolean {
+    return this.passphrase !== null
+  }
+
+  /** Sets/changes/removes (pass null) passphrase protection for future saves. */
+  setPassphrase(passphrase: string | null): void {
+    this.passphrase = passphrase
+  }
+
+  async exportBytes(): Promise<Uint8Array> {
+    const raw = this.core.export()
+    return this.passphrase ? encryptBytes(raw, this.passphrase) : raw
   }
 
   async persistToIndexedDb(): Promise<void> {
-    await idbSet(AUTOSAVE_KEY, { bytes: this.export(), displayName: this.displayName })
+    await idbSet(AUTOSAVE_KEY, { bytes: await this.exportBytes(), displayName: this.displayName })
   }
 
   upsert(table: EntityTable, id: string, row: Record<string, unknown>, data: unknown): void {

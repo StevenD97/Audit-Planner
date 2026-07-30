@@ -252,3 +252,68 @@ avoids needing server-side rewrite rules for client-side routes.
 The one-time manual step (enabling "GitHub Actions" as the Pages source in
 repo Settings) is a repository-admin action outside what a workflow file
 can itself turn on.
+
+## 10. Passphrase-protected storage (encryption at rest)
+
+§9 made the app reachable from a browser without any organisational IT
+involvement. That raised a real question the moment real audit data is at
+stake: the app has no login, and browser/file storage is unencrypted by
+default. This section is the honest answer — what was actually built, and,
+just as importantly, what it deliberately does not claim to solve.
+
+**What this is not.** It is not an access-control system, and it does not
+make the app "safe" in any absolute sense. No client-side check can
+enforce a login against a static site (GitHub Pages has no server to ask
+"is this person allowed in?"), so this feature does not attempt one — a
+JavaScript password prompt with no server behind it is security theatre,
+and building one would just be lying to the user about what it does. What
+*is* real: once data is written to disk (desktop `.iaap` file) or to
+IndexedDB (browser autosave), it is unreadable without the passphrase, full
+stop, regardless of who has the file or the disk.
+
+**Design.** `src/shared/crypto.ts` — one implementation, used verbatim by
+both the desktop and browser platforms (§9), built entirely on the standard
+Web Crypto API (`crypto.subtle`), which is identical in Electron's main
+process (Node 20+) and in a browser tab:
+- **Key derivation:** PBKDF2-HMAC-SHA256, 210,000 iterations (OWASP's 2023
+  minimum recommendation), unique random 16-byte salt per encryption.
+- **Encryption:** AES-256-GCM (authenticated — tampering or using the wrong
+  key is detected, not silently decrypted into garbage), unique random
+  12-byte nonce per encryption.
+- **File format:** `[8-byte magic "IAAPENC1"][16-byte salt][12-byte
+  IV][ciphertext+tag]`. The magic prefix is how `isEncrypted()` distinguishes
+  a protected file from a plain SQLite file (which starts `SQLite format
+  3\0`) without needing any passphrase up front — this is what lets a
+  pre-existing, unencrypted `.iaap` file keep opening exactly as before
+  (backward compatible; there is no forced migration).
+- **The passphrase itself is never persisted anywhere** — not in the file,
+  not in `localStorage`/IndexedDB, not in Electron's settings. It only ever
+  exists in memory for the current session (`Workspace`/`BrowserWorkspace`
+  hold it to keep encrypting subsequent autosaves), which is also why
+  there is no recovery path if it's forgotten — that trade-off is explicit
+  and shown to the user in the UI, not buried.
+
+**Where it's wired in:**
+- `src/main/db/workspace.ts` (desktop) / `src/renderer/src/platform/browserWorkspace.ts`
+  (browser) both encrypt on every write when a passphrase is set, and both
+  throw a shared `NeedsPassphraseError` when asked to open/restore bytes
+  that are encrypted without one — the IPC layer (`src/main/ipc/handlers.ts`)
+  and the browser platform API (`browserPlatformApi.ts`) catch that and
+  signal `needsPassphrase: true` back to the UI instead of the usual state.
+- `src/renderer/src/components/PassphraseModal.tsx` handles both flows
+  (unlock, and set/change/remove protection) and is shown by
+  `src/renderer/src/store/workspaceStore.ts`, which is secure-by-default:
+  creating a new workspace immediately offers protection (skippable, not
+  forced) rather than requiring the user to find a setting later.
+
+**What this still leaves as your responsibility, stated plainly:**
+- Anyone with access to the *unlocked, running* app — an open laptop, a
+  shared login session — sees everything. This protects data at rest, not
+  data in use.
+- A forgotten passphrase means permanently lost data, by design (see
+  above). Store it in a real password manager.
+- This is one engineering control, not an organisational sign-off. For
+  data with real regulatory/legal weight, encryption at rest narrows the
+  risk considerably but does not substitute for your organisation's actual
+  security/compliance review — see the conversation that motivated this
+  feature for the fuller reasoning on where the line is.

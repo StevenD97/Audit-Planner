@@ -1,14 +1,18 @@
 import type { PreloadApi, WorkspaceState } from '@shared/ipc'
 import type { EntityTable } from '@shared/workspaceEntities'
 import type { ExportDocument } from '@shared/export'
+import { NeedsPassphraseError } from '@shared/crypto'
 import { BrowserWorkspace } from './browserWorkspace'
 import { buildExcelBlob, buildPdfBlob, downloadBlob } from './browserExport'
 
 let current: BrowserWorkspace | null = null
+/** Bytes (+ display name) of a file/autosave awaiting a passphrase via workspaceUnlock. */
+let pendingUnlock: { bytes: Uint8Array; displayName: string; source: 'file' | 'autosave' } | null = null
 
 function buildState(ws: BrowserWorkspace): WorkspaceState {
   return {
     filePath: ws.displayName,
+    isEncrypted: ws.isEncrypted,
     auditProjects: ws.getAll('audit_projects'),
     programmeSlots: ws.getAll('programme_slots'),
     checklistItems: ws.getAll('checklist_items'),
@@ -48,6 +52,7 @@ async function autosave(): Promise<void> {
 export const browserPlatformApi: PreloadApi = {
   async workspaceNew() {
     current = await BrowserWorkspace.createNew()
+    pendingUnlock = null
     await autosave()
     return buildState(current)
   },
@@ -56,9 +61,37 @@ export const browserPlatformApi: PreloadApi = {
     const file = await pickFile('.iaap,application/x-sqlite3,application/octet-stream')
     if (!file) return { canceled: true }
     const bytes = new Uint8Array(await file.arrayBuffer())
-    current = await BrowserWorkspace.fromBytes(bytes, file.name)
+    try {
+      current = await BrowserWorkspace.fromBytes(bytes, file.name)
+      pendingUnlock = null
+      await autosave()
+      return { canceled: false, state: buildState(current) }
+    } catch (err) {
+      if (err instanceof NeedsPassphraseError) {
+        pendingUnlock = { bytes: err.encryptedBytes, displayName: file.name, source: 'file' }
+        return { canceled: false, needsPassphrase: true }
+      }
+      throw err
+    }
+  },
+
+  async workspaceUnlock(passphrase: string) {
+    if (!pendingUnlock) return { success: false, error: 'No file is waiting to be unlocked.' }
+    try {
+      current = await BrowserWorkspace.fromBytes(pendingUnlock.bytes, pendingUnlock.displayName, passphrase)
+      pendingUnlock = null
+      await autosave()
+      return { success: true, state: buildState(current) }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  },
+
+  async workspaceSetPassphrase(passphrase: string | null) {
+    const ws = requireWorkspace()
+    ws.setPassphrase(passphrase)
     await autosave()
-    return { canceled: false, state: buildState(current) }
+    return { ok: true }
   },
 
   async workspaceSave() {
@@ -76,7 +109,7 @@ export const browserPlatformApi: PreloadApi = {
     const ws = requireWorkspace()
     const name = ws.displayName?.replace(/\.iaap$/i, '') || 'Audit Workspace'
     const fileName = `${name}.iaap`
-    downloadBlob(new Blob([ws.export() as BlobPart]), fileName)
+    downloadBlob(new Blob([(await ws.exportBytes()) as BlobPart]), fileName)
     ws.displayName = fileName
     await autosave()
     return { canceled: false, filePath: fileName }
@@ -110,10 +143,25 @@ export const browserPlatformApi: PreloadApi = {
   }
 }
 
-/** Called once at renderer startup (browser mode only) to reload any autosaved workspace. */
-export async function tryRestoreAutosavedWorkspace(): Promise<WorkspaceState | null> {
-  const restored = await BrowserWorkspace.fromAutosave()
-  if (!restored) return null
-  current = restored
-  return buildState(current)
+/**
+ * Called once at renderer startup (browser mode only) to reload any
+ * autosaved workspace. Returns `{ needsPassphrase: true }` instead of state
+ * if the autosaved copy is passphrase-protected — the caller should prompt
+ * and then call `browserPlatformApi.workspaceUnlock`.
+ */
+export async function tryRestoreAutosavedWorkspace(): Promise<
+  { state: WorkspaceState } | { needsPassphrase: true } | null
+> {
+  try {
+    const restored = await BrowserWorkspace.fromAutosave()
+    if (!restored) return null
+    current = restored
+    return { state: buildState(current) }
+  } catch (err) {
+    if (err instanceof NeedsPassphraseError) {
+      pendingUnlock = { bytes: err.encryptedBytes, displayName: 'Autosaved workspace', source: 'autosave' }
+      return { needsPassphrase: true }
+    }
+    throw err
+  }
 }

@@ -82,7 +82,7 @@ app.whenReady().then(() => {
   // loss without needing the user to remember to hit Ctrl+S constantly.
   autosaveTimer = setInterval(() => {
     const ws = getCurrentWorkspace()
-    if (ws?.filePath) ws.save()
+    if (ws?.filePath) void ws.save()
   }, 60_000)
 
   app.on('activate', () => {

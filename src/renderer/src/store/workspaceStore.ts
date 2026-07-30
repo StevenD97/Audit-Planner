@@ -11,12 +11,15 @@ import type {
 import type { WorkspaceState } from '@shared/ipc'
 import { getPlatformApi, isElectron, tryRestoreAutosavedWorkspace } from '../platform'
 
+export type PassphraseModalState = { mode: 'set' } | { mode: 'unlock'; error?: string } | null
+
 interface Store {
   workspace: WorkspaceState | null
   loading: boolean
   currentAuditProjectId: string | null
   aiPanelOpen: boolean
   toast: string | null
+  passphraseModal: PassphraseModalState
 
   init(): Promise<void>
   newWorkspace(): Promise<void>
@@ -27,6 +30,11 @@ interface Store {
   setCurrentAuditProject(id: string | null): void
   setAiPanelOpen(open: boolean): void
   setToast(message: string | null): void
+
+  openSetPassphraseModal(): void
+  closePassphraseModal(): Promise<void>
+  submitUnlockPassphrase(passphrase: string): Promise<void>
+  submitSetPassphrase(passphrase: string | null): Promise<void>
 
   createAuditProject(partial: Partial<AuditProject>): Promise<AuditProject>
   updateAuditProject(id: string, patch: Partial<AuditProject>): Promise<void>
@@ -58,27 +66,45 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
   currentAuditProjectId: null,
   aiPanelOpen: false,
   toast: null,
+  passphraseModal: null,
 
   async init() {
     set({ loading: true })
-    // In the browser build, pick up whatever was last autosaved to this
-    // browser's IndexedDB before defaulting to a brand-new workspace. The
-    // desktop build has no such concept — it always starts a fresh in-memory
-    // workspace and relies on Open/Save against real files.
-    const restored = isElectron() ? null : await tryRestoreAutosavedWorkspace()
-    const state = restored ?? (await getPlatformApi().workspaceNew())
-    set({ workspace: state, loading: false })
+    if (isElectron()) {
+      // Electron always starts a fresh in-memory workspace; Open/Save work
+      // against real files (and prompt for a passphrase there if needed).
+      const state = await getPlatformApi().workspaceNew()
+      set({ workspace: state, loading: false })
+      return
+    }
+    // Browser build: pick up whatever was last autosaved to IndexedDB.
+    const restored = await tryRestoreAutosavedWorkspace()
+    if (restored === null) {
+      const state = await getPlatformApi().workspaceNew()
+      set({ workspace: state, loading: false, passphraseModal: { mode: 'set' } })
+    } else if ('needsPassphrase' in restored) {
+      set({ loading: false, passphraseModal: { mode: 'unlock' } })
+    } else {
+      set({ workspace: restored.state, loading: false })
+    }
   },
 
   async newWorkspace() {
     const state = await getPlatformApi().workspaceNew()
-    set({ workspace: state, currentAuditProjectId: null })
+    // Secure-by-default: offer passphrase protection up front rather than
+    // making the user remember to go find the setting later.
+    set({ workspace: state, currentAuditProjectId: null, passphraseModal: { mode: 'set' } })
   },
 
   async openWorkspace() {
     const result = await getPlatformApi().workspaceOpen()
-    if (result.canceled || !result.state) return
-    set({ workspace: result.state, currentAuditProjectId: null })
+    if (result.canceled) return
+    if (result.needsPassphrase) {
+      set({ passphraseModal: { mode: 'unlock' } })
+      return
+    }
+    if (!result.state) return
+    set({ workspace: result.state, currentAuditProjectId: null, passphraseModal: null })
   },
 
   async saveWorkspace() {
@@ -107,6 +133,39 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
   setToast(message) {
     set({ toast: message })
     if (message) setTimeout(() => set((s) => (s.toast === message ? { toast: null } : {})), 3500)
+  },
+
+  openSetPassphraseModal() {
+    set({ passphraseModal: { mode: 'set' } })
+  },
+
+  async closePassphraseModal() {
+    // If we were still initializing (autosave restore needed a passphrase
+    // the user can't/won't supply right now), fall back to a fresh
+    // workspace rather than leaving the app stuck with nothing loaded. The
+    // encrypted autosave is untouched in IndexedDB — reloading the page
+    // will prompt again if they want to try the passphrase another time.
+    const stillInitializing = get().workspace === null
+    set({ passphraseModal: null })
+    if (stillInitializing) {
+      const state = await getPlatformApi().workspaceNew()
+      set({ workspace: state, loading: false })
+    }
+  },
+
+  async submitUnlockPassphrase(passphrase) {
+    const result = await getPlatformApi().workspaceUnlock(passphrase)
+    if (!result.success || !result.state) {
+      set({ passphraseModal: { mode: 'unlock', error: result.error ?? 'Incorrect passphrase.' } })
+      return
+    }
+    set({ workspace: result.state, currentAuditProjectId: null, passphraseModal: null, loading: false })
+  },
+
+  async submitSetPassphrase(passphrase) {
+    await getPlatformApi().workspaceSetPassphrase(passphrase)
+    await get().refresh()
+    set({ passphraseModal: null })
   },
 
   async createAuditProject(partial) {
