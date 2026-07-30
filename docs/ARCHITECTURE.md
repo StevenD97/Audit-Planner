@@ -248,10 +248,19 @@ and out of scope for this change.
 the same build works whether it's served from a domain root or a GitHub
 Pages project subpath — paired with the app's existing `HashRouter`, which
 avoids needing server-side rewrite rules for client-side routes.
-`.github/workflows/deploy-pages.yml` builds and publishes it on every push.
-The one-time manual step (enabling "GitHub Actions" as the Pages source in
-repo Settings) is a repository-admin action outside what a workflow file
-can itself turn on.
+
+**Status: the public GitHub Pages deployment has been decommissioned.**
+It was live briefly (`.github/workflows/deploy-pages.yml` built and
+published `dist-web/` on every push), but was taken down once the primary
+usage settled on the desktop build, which has no public URL to secure in
+the first place. The workflow file has been removed so nothing redeploys.
+Fully un-publishing the already-live site and reverting the repo to
+private (required public for Pages on the Free plan) are two repo-settings
+changes outside what any workflow file or this codebase can do — see the
+README's "Web build & deployment" section for the exact steps. The
+`vite.config.web.ts` build and the browser platform code (§9 above) are
+left in place and still work locally (`npm run build:web`/`dev:web`) in
+case a properly access-controlled deployment is wanted later.
 
 ## 10. Passphrase-protected storage (encryption at rest)
 

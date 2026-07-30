@@ -70,14 +70,27 @@ workspace unless you download a `.iaap` file from one and upload it on the
 other. See `docs/ARCHITECTURE.md` §9 for the full rationale and the tradeoffs
 of moving to shared/multi-user storage later.
 
-**Deploying to GitHub Pages:** `.github/workflows/deploy-pages.yml` builds
-`npm run build:web` and publishes `dist-web/` on every push to `main` (or
-this branch), or on demand via the Actions tab's "Run workflow" button.
+**Public GitHub Pages deployment: decommissioned.** This was briefly live
+at `https://<org-or-user>.github.io/<repo>/` via
+`.github/workflows/deploy-pages.yml`, but has been taken down — the primary
+usage is the desktop build, which never exposes anything publicly, and
+there was no reason to leave a public URL live that wasn't the one actually
+being used. The workflow file has been removed so nothing redeploys on
+push. Two settings changes finish taking it fully offline (I don't have
+the ability to change repo-level GitHub settings from here, only files/git):
 
-**One-time setup required** (repo admin, not something a workflow file can
-turn on by itself): go to **Settings → Pages → Build and deployment →
-Source** and select **"GitHub Actions"**. Once that's set, the workflow run
-will publish to `https://<org-or-user>.github.io/<repo>/`.
+1. **Settings → Pages → Build and deployment → Source** → set to **"None"**
+   (un-publishes the already-live site; without a workflow it won't
+   redeploy, but the last published version stays reachable until this is
+   set).
+2. **Settings → General → Danger Zone → Change visibility → Private**
+   (reverts the repo to private now that Pages, which required it be
+   public on the Free plan, is no longer in use).
+
+The `build:web`/`dev:web`/`preview:web` scripts and the browser platform
+code (`src/renderer/src/platform`) are left in place and still work — see
+"Web build & deployment" above — in case a properly access-controlled
+deployment is wanted later.
 
 ## Passphrase protection (encryption at rest)
 
