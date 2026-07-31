@@ -70,27 +70,27 @@ workspace unless you download a `.iaap` file from one and upload it on the
 other. See `docs/ARCHITECTURE.md` §9 for the full rationale and the tradeoffs
 of moving to shared/multi-user storage later.
 
-**Public GitHub Pages deployment: decommissioned.** This was briefly live
-at `https://<org-or-user>.github.io/<repo>/` via
-`.github/workflows/deploy-pages.yml`, but has been taken down — the primary
-usage is the desktop build, which never exposes anything publicly, and
-there was no reason to leave a public URL live that wasn't the one actually
-being used. The workflow file has been removed so nothing redeploys on
-push. Two settings changes finish taking it fully offline (I don't have
-the ability to change repo-level GitHub settings from here, only files/git):
+**Public GitHub Pages deployment: live again.** The desktop build turned
+out not to be viable without local IT approval to run an installer, so the
+web app (`.github/workflows/deploy-pages.yml`) is back as the primary access
+path, at `https://<org-or-user>.github.io/<repo>/`. Two one-time,
+repo-admin-only settings changes are needed for the workflow to actually
+publish (I can't change repo-level GitHub settings myself, only files/git):
 
-1. **Settings → Pages → Build and deployment → Source** → set to **"None"**
-   (un-publishes the already-live site; without a workflow it won't
-   redeploy, but the last published version stays reachable until this is
-   set).
-2. **Settings → General → Danger Zone → Change visibility → Private**
-   (reverts the repo to private now that Pages, which required it be
-   public on the Free plan, is no longer in use).
+1. **Settings → General → Danger Zone → Change visibility → Public**
+   (GitHub Pages on the Free plan only serves public repos; there is no way
+   around this short of a paid plan).
+2. **Settings → Pages → Build and deployment → Source** → set to
+   **"GitHub Actions"**.
 
-The `build:web`/`dev:web`/`preview:web` scripts and the browser platform
-code (`src/renderer/src/platform`) are left in place and still work — see
-"Web build & deployment" above — in case a properly access-controlled
-deployment is wanted later.
+Once both are set, push to this branch (or run the workflow manually from
+the Actions tab) and the site goes live at the URL above. **What being
+public actually exposes**: the app's source code and the empty UI shell —
+nothing else. There is no server and no database; every audit you create
+lives only in that browser's IndexedDB (or a downloaded `.iaap` file), so
+making the repo public does not publish any audit data, regardless of who
+else finds the link. See "Passphrase protection" below for protecting a
+`.iaap` file if you export one.
 
 ## Passphrase protection (encryption at rest)
 

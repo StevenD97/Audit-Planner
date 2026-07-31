@@ -249,18 +249,17 @@ the same build works whether it's served from a domain root or a GitHub
 Pages project subpath — paired with the app's existing `HashRouter`, which
 avoids needing server-side rewrite rules for client-side routes.
 
-**Status: the public GitHub Pages deployment has been decommissioned.**
-It was live briefly (`.github/workflows/deploy-pages.yml` built and
-published `dist-web/` on every push), but was taken down once the primary
-usage settled on the desktop build, which has no public URL to secure in
-the first place. The workflow file has been removed so nothing redeploys.
-Fully un-publishing the already-live site and reverting the repo to
-private (required public for Pages on the Free plan) are two repo-settings
-changes outside what any workflow file or this codebase can do — see the
-README's "Web build & deployment" section for the exact steps. The
-`vite.config.web.ts` build and the browser platform code (§9 above) are
-left in place and still work locally (`npm run build:web`/`dev:web`) in
-case a properly access-controlled deployment is wanted later.
+**Status: the public GitHub Pages deployment is live (again).** It was
+briefly decommissioned in favour of a desktop-installer build, but that
+path required running an unsigned `.exe`, which isn't viable without local
+IT approval — so the browser build (`.github/workflows/deploy-pages.yml`,
+publishing `dist-web/` on every push) is back as the primary access path.
+This requires the repo to be public (GitHub Pages has no private-repo
+option on the Free plan) — see the README's "Web build & deployment"
+section for the exact repo-settings steps and, importantly, why publicity
+of the *code* doesn't mean publicity of any *audit data*: nothing is
+server-side, so every workspace lives only in that browser's storage or an
+exported `.iaap` file.
 
 ## 10. Passphrase-protected storage (encryption at rest)
 
