@@ -142,6 +142,8 @@ export interface AuditProject {
   processIds?: string[]
   /** Compliance obligations (from Legal & Compliance) in scope for this audit, in addition to standard-driven clause scope. */
   obligationIds?: string[]
+  /** When true, Programme Builder reorders/duplicates the clause scope by risk-based coverage priority before scheduling. */
+  prioritiseByRisk?: boolean
 }
 
 export type ProgrammeActivityType =

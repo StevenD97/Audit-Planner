@@ -6,6 +6,7 @@ import { getAuditableClauses, getClauseById } from '@shared/knowledge-base'
 import { generateProgramme, findSchedulingConflicts } from '@shared/engine/scheduler'
 import { collectProcessClauseIds } from '@shared/engine/processClauses'
 import { collectObligationClauseIds } from '@shared/engine/compliance'
+import { prioritiseClausesForScheduling } from '@shared/engine/riskHeatmap'
 import type { ProgrammeActivityType, ProgrammeSlot } from '@shared/types'
 
 const ACTIVITY_LABELS: Record<ProgrammeActivityType, string> = {
@@ -72,11 +73,26 @@ export default function ProgrammeBuilderPage(): JSX.Element {
     await updateAuditProject(project!.id, { obligationIds: next })
   }
 
+  async function togglePrioritiseByRisk(): Promise<void> {
+    await updateAuditProject(project!.id, { prioritiseByRisk: !project!.prioritiseByRisk })
+  }
+
   async function autoGenerate(): Promise<void> {
+    const orderedClauses = project!.prioritiseByRisk
+      ? prioritiseClausesForScheduling(
+          clauses,
+          allProcesses,
+          workspace?.risks ?? [],
+          workspace?.controls ?? [],
+          workspace?.auditFindings ?? [],
+          allObligations,
+          workspace?.complianceEvaluations ?? []
+        )
+      : clauses
     const generated = generateProgramme({
       auditProjectId: project!.id,
       durationDays: project!.durationDays ?? 1,
-      clauses,
+      clauses: orderedClauses,
       departments: project!.departments
     })
     await replaceProgrammeSlots(project!.id, generated)
@@ -159,6 +175,15 @@ export default function ProgrammeBuilderPage(): JSX.Element {
             <p className="text-xs text-slate-500">
               +{extraClauses.length} clause(s) added to scope from selected processes/obligations.
             </p>
+          )}
+          {(workspace?.risks ?? []).length > 0 && (
+            <label className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-700">
+              <input type="checkbox" checked={project.prioritiseByRisk ?? false} onChange={togglePrioritiseByRisk} />
+              Prioritise by risk
+              <span className="font-normal text-slate-400">
+                (increase audit depth where risk, findings and compliance failures concentrate — see Risk Register)
+              </span>
+            </label>
           )}
         </div>
       )}

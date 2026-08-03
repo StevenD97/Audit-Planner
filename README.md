@@ -131,37 +131,45 @@ this does and doesn't protect against**. Two things worth knowing up front:
    evaluations (Compliant/Non-compliant/Partial) over time. Overdue
    reviews and a compliance-rate summary surface at the top of the
    screen.
-5. **Programme Builder** — auto-generate a day-by-day schedule from the
+5. **Risk Register** — every risk recorded against a process, plotted on
+   a likelihood x severity heat map (click a cell to see what's in it),
+   plus a coverage-priority ranking of processes driven by their risk
+   level, findings raised against them, and non-compliant obligations
+   linked to their clauses — with the reasoning behind each ranking shown,
+   not just a number.
+6. **Programme Builder** — auto-generate a day-by-day schedule from the
    audit's in-scope clauses; optionally select processes and/or legal
    obligations in scope to widen the schedule to whatever those actually
    link to, planning by process or compliance obligation rather than only
-   by clause. Adjust activity types/owners/locations afterward.
-6. **Clause Explorer** — browse every clause with its requirement,
+   by clause. A **"Prioritise by risk"** toggle reorders the schedule so
+   higher-priority processes (per the Risk Register) are covered earlier
+   and in more depth. Adjust activity types/owners/locations afterward.
+7. **Clause Explorer** — browse every clause with its requirement,
    explanation, audit intent, evidence required, interview questions,
    typical findings, related/cross-standard clauses, and — via the
    **Legal** tab — every compliance obligation linked to that clause,
    with a direct link back into Legal & Compliance. Global search:
    `Ctrl/Cmd+K`.
-7. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
+8. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
    / **Readiness Assessment** — generate and work through audit-ready
    artefacts from the same knowledge base. Any clause rated Minor/Major NC
    in the Gap Assessment Tool can be **raised as a finding** with one
    click, pre-filled from the assessment narrative.
-8. **Findings & Corrective Actions** — track findings (Observation / OFI
+9. **Findings & Corrective Actions** — track findings (Observation / OFI
    / Minor NC / Major NC) to closure: run a root cause analysis (5 Why,
    Fishbone, or a simplified TapRooT-style method), log corrective
    actions with an owner/due date/verification notes, and see open
    findings, overdue actions, closure rate, and **recurring findings
    across your entire audit history** (the same clause or process
    showing up repeatedly across different audits) at a glance.
-9. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
-   Monitoring→Management Review; Hazard ID→Risk Assessment→Controls→
-   Training→Incident Investigation; Environmental Aspects→Controls→
-   Monitoring→Compliance Obligations; plus four more) can be added straight
-   into the programme.
-10. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or
+10. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
+    Monitoring→Management Review; Hazard ID→Risk Assessment→Controls→
+    Training→Incident Investigation; Environmental Aspects→Controls→
+    Monitoring→Compliance Obligations; plus four more) can be added
+    straight into the programme.
+11. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or
     Gap Assessment Report to Excel or PDF.
-11. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
+12. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
     deterministic, fully-offline recommender (no external API calls) that
     suggests questions, trails, weak areas, interview plans, missing
     evidence and agendas from the current audit's actual data, behind a
@@ -169,7 +177,7 @@ this does and doesn't protect against**. Two things worth knowing up front:
     (e.g. Ollama) can be swapped in without touching UI code. See
     `docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md` for the full platform
     roadmap and `docs/ARCHITECTURE.md` §6 for why it's rule-based rather
-   than LLM-backed today.
+    than LLM-backed today.
 
 ## Project layout
 

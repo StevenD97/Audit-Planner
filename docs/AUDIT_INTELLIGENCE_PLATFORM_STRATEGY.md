@@ -616,12 +616,39 @@ also landed:**
   → closure flow was exercised live in a browser (screenshot, zero
   console errors).
 
-**Next up: M4 (Risk-based audit planning, Phase 5 of the brief)** —
-a first-class Risk register view with heat maps and coverage-adjustment
-logic (more audit depth where risk/findings/compliance-failures/incidents
-concentrate). The `Risk` entity already exists (M1), so M4 is mostly a
-planning/visualisation layer over data that's already there, plus wiring
-findings/compliance history into the coverage-adjustment logic. This is
-the last entity-shaped milestone before Scoring v2 (M5) can be built for
-real, since scoring v2 needs risk, compliance, and findings/closure data
-all as inputs.
+**M4 (Risk-based audit planning, Phase 5 of the brief) is also landed:**
+
+- **Risk Register screen** (`src/renderer/src/features/risk-register/`):
+  a real 5x5 likelihood x severity heat map (click a cell to see which
+  risks fall in it), a ranked list of every risk in the workspace, and a
+  coverage-priority ranking of processes.
+- **Coverage-priority engine** (`src/shared/engine/riskHeatmap.ts`,
+  unit-tested): combines three real signals already tracked in this
+  build — a process's own risk register, findings raised against it, and
+  non-compliant compliance evaluations for obligations linked to its
+  clauses — into a driver-explained priority score per process. **Stated
+  honestly, not silently faked**: "incident history" and "KPI trend" from
+  the brief are not inputs yet, since there is no Incident or
+  KPI-value-over-time entity in this build; adding them later is a new
+  parameter and driver on this function, not a rewrite.
+- **Risk-prioritised scheduling is real, not cosmetic**: Programme
+  Builder's new "Prioritise by risk" toggle calls
+  `prioritiseClausesForScheduling()`, which reorders the clause scope so
+  higher-priority processes' clauses schedule first, and duplicates the
+  highest-priority ones so they get two separate audit slots instead of
+  one — verified live in a browser to actually change slot order and
+  content, not just flip a label.
+- Verified: 73/73 tests pass, typecheck clean, both builds compile, and
+  the heat map + coverage priority + risk-prioritised scheduling were all
+  exercised live in a browser (screenshots, zero console errors) —
+  including catching and correcting a test-script timing artifact that
+  initially looked like a real bug (the checkbox's state hadn't
+  round-tripped through the store before the schedule was generated in
+  the first pass; confirming the checkbox state before generating showed
+  the reordering works correctly).
+
+**Next up: M5 (Intelligent Readiness Scoring, Phase 4 of the brief)** —
+replaces the current three-input readiness score (evidence + gap
+assessment + static weighting) with a multi-input, multi-level,
+explainable one, now that M2/M3/M4 have given it real compliance,
+findings-closure, and risk data to draw on.
