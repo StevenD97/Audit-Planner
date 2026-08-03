@@ -1,19 +1,45 @@
 import { useMemo } from 'react'
 import { newId } from '@shared/id'
-import { getAuditableClauses } from '@shared/knowledge-base'
-import { computeReadiness } from '@shared/engine/scoring'
-import { AuditProjectPicker, RatingBadge, useCurrentAuditProject } from '../../components/common'
+import { getAuditableClauses, getClauseById } from '@shared/knowledge-base'
+import {
+  computeOverallReadinessV2,
+  computeProcessScoreV2,
+  computeDepartmentScoreV2,
+  computeSiteScoreV2,
+  type ScoringV2Context,
+  type ScoredEntity
+} from '@shared/engine/scoringV2'
+import { AuditProjectPicker, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+
+function scoreBarColor(score: number): string {
+  return score >= 80 ? 'bg-status-conforms' : score >= 40 ? 'bg-status-ofi' : 'bg-status-major'
+}
+
+function ScoreRow({ label, entity }: { label: string; entity: ScoredEntity }): JSX.Element {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-3">
+        <span className="w-48 shrink-0 truncate text-xs" title={label}>
+          {label}
+        </span>
+        <div className="h-3 flex-1 rounded-full bg-slate-100 dark:bg-slate-700">
+          <div className={`h-3 rounded-full ${scoreBarColor(entity.score)}`} style={{ width: `${entity.score}%` }} />
+        </div>
+        <span className="w-10 shrink-0 text-right text-xs font-semibold">{entity.score}%</span>
+      </div>
+      {entity.drivers.length > 0 && (
+        <p className="pl-[13.5rem] text-xs text-slate-400">{entity.drivers.map((d) => d.label).join(' · ')}</p>
+      )}
+    </div>
+  )
+}
 
 export default function ReadinessPage(): JSX.Element {
   const project = useCurrentAuditProject()
   const workspace = useWorkspaceStore((s) => s.workspace)
   const addReadinessSnapshot = useWorkspaceStore((s) => s.addReadinessSnapshot)
 
-  const gapAssessments = useMemo(
-    () => (workspace?.gapAssessments ?? []).filter((g) => g.auditProjectId === project?.id),
-    [workspace, project]
-  )
   const snapshots = useMemo(
     () =>
       (workspace?.readinessSnapshots ?? [])
@@ -22,21 +48,61 @@ export default function ReadinessPage(): JSX.Element {
     [workspace, project]
   )
 
-  if (!project) return <AuditProjectPicker />
+  if (!project || !workspace) return <AuditProjectPicker />
+
+  const ctx: ScoringV2Context = {
+    gapAssessments: workspace.gapAssessments,
+    auditFindings: workspace.auditFindings,
+    correctiveActions: workspace.correctiveActions,
+    complianceObligations: workspace.complianceObligations,
+    complianceEvaluations: workspace.complianceEvaluations,
+    evidencePlanItems: workspace.evidencePlanItems,
+    risks: workspace.risks,
+    controls: workspace.controls,
+    processes: workspace.processes
+  }
+
+  const clauseTitleFor = (clauseId: string): string => {
+    const c = getClauseById(clauseId)
+    return c ? `§${c.clauseNumber} ${c.title}` : clauseId
+  }
+  const processNameFor = (processId: string): string => workspace.processes.find((p) => p.id === processId)?.name ?? processId
+  const departmentNameFor = (departmentId: string): string =>
+    workspace.orgDepartments.find((d) => d.id === departmentId)?.name ?? departmentId
+  const siteNameFor = (siteId: string): string => workspace.orgSites.find((s) => s.id === siteId)?.name ?? siteId
 
   const clauses = project.standards.flatMap((s) => getAuditableClauses(s))
-  const readiness = computeReadiness(clauses, gapAssessments)
-  const sorted = [...readiness.byClause].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+  const overall = computeOverallReadinessV2(clauses.map((c) => c.id), clauseTitleFor, project.id, ctx)
+  const worstFirst = [...(overall.children ?? [])].sort((a, b) => a.score - b.score)
+
+  const byProcess = workspace.processes
+    .map((p) => computeProcessScoreV2(p, clauseTitleFor, project.id, ctx))
+    .filter((e) => (e.children?.length ?? 0) > 0)
+    .sort((a, b) => a.score - b.score)
+
+  const byDepartment = workspace.orgDepartments
+    .map((d) => computeDepartmentScoreV2(d.id, workspace.orgFunctions, processNameFor, clauseTitleFor, project.id, ctx))
+    .filter((e) => (e.children?.length ?? 0) > 0)
+    .sort((a, b) => a.score - b.score)
+
+  const bySite = workspace.orgSites
+    .map((s) =>
+      computeSiteScoreV2(s.id, workspace.orgDepartments, workspace.orgFunctions, departmentNameFor, processNameFor, clauseTitleFor, project.id, ctx)
+    )
+    .filter((e) => (e.children?.length ?? 0) > 0)
+    .sort((a, b) => a.score - b.score)
 
   async function takeSnapshot(): Promise<void> {
     await addReadinessSnapshot({
       id: newId(),
       auditProjectId: project!.id,
       takenAt: new Date().toISOString(),
-      overallPct: readiness.overallPct,
-      byClause: readiness.byClause.map((c) => ({ clauseId: c.clauseId, score: c.score ?? 0 })),
-      highRiskGaps: readiness.highRiskGaps,
-      recommendedActions: readiness.recommendedActions
+      overallPct: overall.score,
+      byClause: (overall.children ?? []).map((c) => ({ clauseId: c.id, score: c.score })),
+      highRiskGaps: worstFirst
+        .filter((c) => c.score < 50)
+        .map((c) => ({ clauseId: c.id, reason: `${clauseTitleFor(c.id)}: ${c.drivers.map((d) => d.label).join('; ') || 'low score'}` })),
+      recommendedActions: worstFirst.filter((c) => c.score < 80).map((c) => `${clauseTitleFor(c.id)}: address ${c.drivers[0]?.label ?? 'outstanding gaps'}`)
     })
   }
 
@@ -49,11 +115,16 @@ export default function ReadinessPage(): JSX.Element {
         </button>
       </div>
       <AuditProjectPicker />
+      <p className="text-sm text-slate-500">
+        Every score below is explainable — the text under each bar is exactly why it isn&apos;t 100%, combining gap
+        assessment ratings, open findings and their closure history, compliance evaluations, evidence completeness,
+        and linked risk levels.
+      </p>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="card flex flex-col items-center justify-center">
           <p className="text-sm text-slate-500">Overall readiness</p>
-          <p className="text-4xl font-bold text-brand-600 dark:text-brand-400">{readiness.overallPct}%</p>
+          <p className="text-4xl font-bold text-brand-600 dark:text-brand-400">{overall.score}%</p>
         </div>
         <div className="card lg:col-span-2">
           <p className="mb-2 text-sm text-slate-500">Readiness trend ({snapshots.length} snapshot(s))</p>
@@ -61,55 +132,38 @@ export default function ReadinessPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="card">
-        <h2 className="mb-3 text-lg font-semibold">Clause compliance scores (worst first)</h2>
-        <div className="space-y-1">
-          {sorted.map((c) => (
-            <div key={c.clauseId} className="flex items-center gap-3">
-              <span className="w-40 shrink-0 truncate text-xs">
-                §{c.clauseNumber} {c.title}
-              </span>
-              <div className="h-3 flex-1 rounded-full bg-slate-100 dark:bg-slate-700">
-                <div
-                  className={`h-3 rounded-full ${
-                    (c.score ?? 0) >= 80 ? 'bg-status-conforms' : (c.score ?? 0) >= 40 ? 'bg-status-ofi' : 'bg-status-major'
-                  }`}
-                  style={{ width: `${c.score ?? 0}%` }}
-                />
-              </div>
-              <RatingBadge rating={c.rating} />
-            </div>
+      {bySite.length > 0 && (
+        <div className="card space-y-2">
+          <h2 className="mb-1 text-lg font-semibold">Readiness by site</h2>
+          {bySite.map((s) => (
+            <ScoreRow key={s.id} label={siteNameFor(s.id)} entity={s} />
           ))}
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="card">
-          <h2 className="mb-2 text-lg font-semibold">High-risk gaps</h2>
-          {readiness.highRiskGaps.length === 0 ? (
-            <p className="text-sm text-slate-500">None currently — assess clauses in the Gap Assessment Tool.</p>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {readiness.highRiskGaps.map((g, i) => (
-                <li key={i} className="rounded-lg bg-red-50 p-2 dark:bg-red-900/20">
-                  {g.reason}
-                </li>
-              ))}
-            </ul>
-          )}
+      {byDepartment.length > 0 && (
+        <div className="card space-y-2">
+          <h2 className="mb-1 text-lg font-semibold">Readiness by department</h2>
+          {byDepartment.map((d) => (
+            <ScoreRow key={d.id} label={departmentNameFor(d.id)} entity={d} />
+          ))}
         </div>
-        <div className="card">
-          <h2 className="mb-2 text-lg font-semibold">Recommended actions</h2>
-          {readiness.recommendedActions.length === 0 ? (
-            <p className="text-sm text-slate-500">No outstanding actions.</p>
-          ) : (
-            <ul className="list-disc space-y-1 pl-5 text-sm">
-              {readiness.recommendedActions.map((a, i) => (
-                <li key={i}>{a}</li>
-              ))}
-            </ul>
-          )}
+      )}
+
+      {byProcess.length > 0 && (
+        <div className="card space-y-2">
+          <h2 className="mb-1 text-lg font-semibold">Readiness by process</h2>
+          {byProcess.map((p) => (
+            <ScoreRow key={p.id} label={processNameFor(p.id)} entity={p} />
+          ))}
         </div>
+      )}
+
+      <div className="card space-y-2">
+        <h2 className="mb-1 text-lg font-semibold">Clause readiness (worst first)</h2>
+        {worstFirst.map((c) => (
+          <ScoreRow key={c.id} label={clauseTitleFor(c.id)} entity={c} />
+        ))}
       </div>
     </div>
   )

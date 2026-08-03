@@ -647,8 +647,42 @@ also landed:**
   the first pass; confirming the checkbox state before generating showed
   the reordering works correctly).
 
-**Next up: M5 (Intelligent Readiness Scoring, Phase 4 of the brief)** —
-replaces the current three-input readiness score (evidence + gap
-assessment + static weighting) with a multi-input, multi-level,
-explainable one, now that M2/M3/M4 have given it real compliance,
-findings-closure, and risk data to draw on.
+**M5 (Intelligent Readiness Scoring, Phase 4 of the brief) is also
+landed:**
+
+- **Scoring v2 engine** (`src/shared/engine/scoringV2.ts`, 16 unit
+  tests): a weighted, per-clause score built from six real inputs —
+  gap-assessment rating, open findings (capped), a *historical* penalty
+  for corrective actions that were closed late, current compliance
+  evaluation status for linked obligations, evidence-completeness
+  percentage, and linkage to a high risk via a process. Every non-zero
+  contribution produces a `ScoreDriver` (label + signed weight +
+  source type) — the score is never just a number, the reasoning is
+  structurally attached to it.
+- **Real multi-level rollups, not just a per-clause number**:
+  `computeProcessScoreV2` → `computeDepartmentScoreV2` →
+  `computeSiteScoreV2` → overall, each averaging its children and
+  carrying them forward (`ScoredEntity.children`) so a low department
+  score can be drilled into its processes, and a low process score into
+  its exact clauses — genuine transparency, not a tooltip.
+- **The Readiness Assessment screen was actually replaced**, not just
+  supplemented: every score shown (overall, by site, by department, by
+  process, by clause) is v2, with the driver text rendered directly
+  under each bar. Verified live in a browser with real multi-level data
+  (org hierarchy + an adopted process + a Major NC rating) — the numbers
+  matched hand-calculated expectations exactly (79% overall from 48
+  clauses at 80% + one Major NC at 40%).
+- **What's honestly still v1**: `engine/scoring.ts`'s `computeReadiness`
+  is untouched and still powers `engine/recommender.ts`'s weak-area
+  detection internally — rewriting the recommender's internals wasn't
+  in scope for a scoring-model milestone and is the natural job of M6
+  (Audit Intelligence Engine upgrade), which is next. This is stated
+  here rather than left implicit.
+- Verified: 89/89 tests pass, typecheck clean, both builds compile.
+
+**Next up: M6 (Audit Intelligence Engine upgrade, Phase 6 of the
+brief)** — extends the deterministic recommender's graph traversal
+across the new Process/Risk/Control/Legal/Findings entities (not just
+clauses), adds recurrence/pattern detection using the real findings
+history M3 built, and migrates its internal weak-area scoring from v1 to
+v2 so the whole platform is drawing on one consistent, explainable model.

@@ -151,10 +151,15 @@ this does and doesn't protect against**. Two things worth knowing up front:
    with a direct link back into Legal & Compliance. Global search:
    `Ctrl/Cmd+K`.
 8. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
-   / **Readiness Assessment** — generate and work through audit-ready
-   artefacts from the same knowledge base. Any clause rated Minor/Major NC
-   in the Gap Assessment Tool can be **raised as a finding** with one
-   click, pre-filled from the assessment narrative.
+   — generate and work through audit-ready artefacts from the same
+   knowledge base. Any clause rated Minor/Major NC in the Gap Assessment
+   Tool can be **raised as a finding** with one click, pre-filled from
+   the assessment narrative.
+   **Readiness Assessment** scores every clause from six real inputs
+   (gap rating, open findings, corrective-action closure history,
+   compliance evaluations, evidence completeness, linked risk level),
+   shows exactly why each score isn't 100%, and rolls scores up by
+   process, department and site — not just an overall percentage.
 9. **Findings & Corrective Actions** — track findings (Observation / OFI
    / Minor NC / Major NC) to closure: run a root cause analysis (5 Why,
    Fishbone, or a simplified TapRooT-style method), log corrective
