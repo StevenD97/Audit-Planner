@@ -116,28 +116,42 @@ this does and doesn't protect against**. Two things worth knowing up front:
    want it persisted; it autosaves every 60s once a file path exists.
 2. **Audit Planner** — choose ISO 14001, ISO 45001, or both (combined),
    define scope, sites, departments, dates and team.
-3. **Programme Builder** — auto-generate a day-by-day schedule from the
-   audit's in-scope clauses, then adjust activity types/owners/locations.
-4. **Clause Explorer** — browse every clause with its requirement,
+3. **Process Explorer** — model your organisation as Organisation → Site →
+   Department → Function → Process, each process with its own inputs/
+   activities/outputs/KPIs, risks (with likelihood/severity) and controls,
+   each linkable to the ISO clauses it evidences. Adopt any of 10 seeded
+   starter processes (Permit to Work, Waste Management, Incident
+   Management, Contractor Management, Emergency Preparedness, Training &
+   Competence, Management Review, Legal & Compliance Obligations, Change
+   Management, Monitoring & Measurement) instead of starting from scratch.
+4. **Programme Builder** — auto-generate a day-by-day schedule from the
+   audit's in-scope clauses; optionally select processes in scope from the
+   Process Explorer to widen the schedule to whatever those processes'
+   risks/controls actually link to, planning by process rather than only
+   by clause. Adjust activity types/owners/locations afterward.
+5. **Clause Explorer** — browse every clause with its requirement,
    explanation, audit intent, evidence required, interview questions,
    typical findings, and related/cross-standard clauses. Global search:
    `Ctrl/Cmd+K`.
-5. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
+6. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
    / **Readiness Assessment** — generate and work through audit-ready
    artefacts from the same knowledge base.
-6. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
+7. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
    Monitoring→Management Review; Hazard ID→Risk Assessment→Controls→
    Training→Incident Investigation; Environmental Aspects→Controls→
    Monitoring→Compliance Obligations; plus four more) can be added straight
    into the programme.
-7. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or Gap
+8. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or Gap
    Assessment Report to Excel or PDF.
-8. **AI Assistant** (🤖 button, bottom of sidebar) — a deterministic,
-   fully-offline recommender (no external API calls) that suggests
-   questions, trails, weak areas, interview plans, missing evidence and
-   agendas from the current audit's actual data. See
-   `docs/ARCHITECTURE.md` §6 for why it's rule-based rather than LLM-backed
-   in this build, and the upgrade path.
+9. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
+   deterministic, fully-offline recommender (no external API calls) that
+   suggests questions, trails, weak areas, interview plans, missing
+   evidence and agendas from the current audit's actual data, behind a
+   provider seam (`src/shared/engine/ai/`) designed so a future local LLM
+   (e.g. Ollama) can be swapped in without touching UI code. See
+   `docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md` for the full platform
+   roadmap and `docs/ARCHITECTURE.md` §6 for why it's rule-based rather
+   than LLM-backed today.
 
 ## Project layout
 
