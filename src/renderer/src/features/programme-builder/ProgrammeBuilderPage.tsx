@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { AuditProjectPicker, useCurrentAuditProject, ClauseChip } from '../../components/common'
 import { getAuditableClauses, getClauseById } from '@shared/knowledge-base'
 import { generateProgramme, findSchedulingConflicts } from '@shared/engine/scheduler'
+import { collectProcessClauseIds } from '@shared/engine/processClauses'
 import type { ProgrammeActivityType, ProgrammeSlot } from '@shared/types'
 
 const ACTIVITY_LABELS: Record<ProgrammeActivityType, string> = {
@@ -19,13 +20,16 @@ export default function ProgrammeBuilderPage(): JSX.Element {
   const [params] = useSearchParams()
   const projectIdFromUrl = params.get('project')
   const setCurrentAuditProject = useWorkspaceStore((s) => s.setCurrentAuditProject)
-  if (projectIdFromUrl) setCurrentAuditProject(projectIdFromUrl)
+  useEffect(() => {
+    if (projectIdFromUrl) setCurrentAuditProject(projectIdFromUrl)
+  }, [projectIdFromUrl, setCurrentAuditProject])
 
   const project = useCurrentAuditProject()
   const workspace = useWorkspaceStore((s) => s.workspace)
   const replaceProgrammeSlots = useWorkspaceStore((s) => s.replaceProgrammeSlots)
   const upsertProgrammeSlot = useWorkspaceStore((s) => s.upsertProgrammeSlot)
   const removeProgrammeSlot = useWorkspaceStore((s) => s.removeProgrammeSlot)
+  const updateAuditProject = useWorkspaceStore((s) => s.updateAuditProject)
 
   const slots = useMemo(
     () => (workspace?.programmeSlots ?? []).filter((s) => s.auditProjectId === project?.id),
@@ -34,9 +38,29 @@ export default function ProgrammeBuilderPage(): JSX.Element {
 
   if (!project) return <AuditProjectPicker />
 
-  const clauses = project.standards.flatMap((s) => getAuditableClauses(s))
+  const allProcesses = workspace?.processes ?? []
+  const processIdsInScope = project.processIds ?? []
+
+  const standardClauses = project.standards.flatMap((s) => getAuditableClauses(s))
+  const processClauseIds = new Set(
+    collectProcessClauseIds(processIdsInScope, allProcesses, workspace?.risks ?? [], workspace?.controls ?? [])
+  )
+  const standardClauseIds = new Set(standardClauses.map((c) => c.id))
+  const extraFromProcesses = Array.from(processClauseIds)
+    .filter((id) => !standardClauseIds.has(id))
+    .map((id) => getClauseById(id))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c))
+  const clauses = [...standardClauses, ...extraFromProcesses]
+
   const conflicts = findSchedulingConflicts(slots)
   const conflictSlotIds = new Set(conflicts.flatMap((c) => [c.slotA, c.slotB]))
+
+  async function toggleProcessInScope(processId: string): Promise<void> {
+    const next = processIdsInScope.includes(processId)
+      ? processIdsInScope.filter((id) => id !== processId)
+      : [...processIdsInScope, processId]
+    await updateAuditProject(project!.id, { processIds: next })
+  }
 
   async function autoGenerate(): Promise<void> {
     const generated = generateProgramme({
@@ -63,6 +87,39 @@ export default function ProgrammeBuilderPage(): JSX.Element {
         </button>
       </div>
       <AuditProjectPicker />
+
+      {allProcesses.length > 0 && (
+        <div className="card">
+          <p className="mb-2 text-sm font-medium">
+            Plan by process <span className="font-normal text-slate-400">(optional — adds each process&apos;s linked clauses to scope)</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {allProcesses.map((p) => (
+              <label
+                key={p.id}
+                className={`chip cursor-pointer border ${
+                  processIdsInScope.includes(p.id)
+                    ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
+                    : 'border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className="mr-1"
+                  checked={processIdsInScope.includes(p.id)}
+                  onChange={() => toggleProcessInScope(p.id)}
+                />
+                {p.name}
+              </label>
+            ))}
+          </div>
+          {extraFromProcesses.length > 0 && (
+            <p className="mt-2 text-xs text-slate-500">
+              +{extraFromProcesses.length} clause(s) added to scope from selected processes.
+            </p>
+          )}
+        </div>
+      )}
 
       {conflicts.length > 0 && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">

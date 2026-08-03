@@ -138,6 +138,8 @@ export interface AuditProject {
   status: AuditProjectStatus
   createdAt: string
   updatedAt: string
+  /** Processes (from the Process Explorer) in scope for this audit, in addition to standard-driven clause scope. */
+  processIds?: string[]
 }
 
 export type ProgrammeActivityType =
@@ -223,4 +225,82 @@ export interface ReportRecord {
   format: ReportFormat
   filePath: string
   generatedAt: string
+}
+
+// ---- Process-centric organisational model (workspace-scoped master data,
+// independent of any one audit project — see docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md
+// §3.1). Named `OrgSite`/`OrgDepartment` rather than reusing `Site`/`Department`
+// above: those remain the ad hoc, audit-scope entries a wizard step edits
+// per audit; these are the standing organisational hierarchy a Process hangs
+// off, reusable across many audits. ----
+
+export interface Organisation {
+  id: string
+  name: string
+}
+
+export interface Region {
+  id: string
+  organisationId: string
+  name: string
+}
+
+export interface OrgSite {
+  id: string
+  organisationId: string
+  regionId?: string
+  name: string
+  address?: string
+}
+
+export interface OrgDepartment {
+  id: string
+  siteId: string
+  name: string
+}
+
+export interface OrgFunction {
+  id: string
+  departmentId: string
+  name: string
+}
+
+export interface Process {
+  id: string
+  functionId: string
+  name: string
+  description?: string
+  inputs: string[]
+  activities: string[]
+  outputs: string[]
+  kpis: string[]
+  /** Clauses this process is directly relevant to (beyond what its controls already evidence). */
+  clauseIds: string[]
+}
+
+export interface Activity {
+  id: string
+  processId: string
+  name: string
+  description?: string
+}
+
+export type RiskCategory = 'environmental_aspect' | 'ohs_hazard' | 'compliance' | 'business'
+
+export interface Risk {
+  id: string
+  processId: string
+  category: RiskCategory
+  description: string
+  likelihood: 1 | 2 | 3 | 4 | 5
+  severity: 1 | 2 | 3 | 4 | 5
+}
+
+export interface Control {
+  id: string
+  riskId: string
+  description: string
+  controlType?: string
+  /** Which ISO clauses this control is the evidence trail for. */
+  clauseIds: string[]
 }

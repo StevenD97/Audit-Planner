@@ -9,6 +9,7 @@ import type {
   ReadinessSnapshot
 } from '@shared/types'
 import type { WorkspaceState } from '@shared/ipc'
+import type { EntityTable } from '@shared/workspaceEntities'
 import { getPlatformApi, isElectron, tryRestoreAutosavedWorkspace } from '../platform'
 
 export type PassphraseModalState = { mode: 'set' } | { mode: 'unlock'; error?: string } | null
@@ -54,6 +55,18 @@ interface Store {
   upsertGapAssessment(item: GapAssessment): Promise<void>
 
   addReadinessSnapshot(snapshot: ReadinessSnapshot): Promise<void>
+
+  /**
+   * Generic upsert/remove for the process-centric org-hierarchy tables
+   * (organisations, regions, org_sites, org_departments, org_functions,
+   * processes, activities, risks, controls) — these are simple master-data
+   * records with no bespoke row-shaping beyond what EntityTable's extra
+   * columns already define, so a dedicated named wrapper per table (9 pairs)
+   * would be repetition without adding type safety the caller doesn't
+   * already get by passing a correctly-typed `data` object.
+   */
+  upsertEntity(table: EntityTable, row: Record<string, unknown>, data: { id: string }): Promise<void>
+  removeEntity(table: EntityTable, id: string): Promise<void>
 }
 
 function nowIso(): string {
@@ -292,6 +305,16 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
       { auditProjectId: snapshot.auditProjectId, takenAt: snapshot.takenAt },
       snapshot
     )
+    await get().refresh()
+  },
+
+  async upsertEntity(table, row, data) {
+    await getPlatformApi().entityUpsert(table, data.id, row, data)
+    await get().refresh()
+  },
+
+  async removeEntity(table, id) {
+    await getPlatformApi().entityRemove(table, id)
     await get().refresh()
   }
 }))

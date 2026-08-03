@@ -508,15 +508,45 @@ orders *within* what's buildable next).
 
 Steps 1–5 of the brief are delivered above (this document). Per the
 brief's own instruction ("6. Then implement the improvements
-iteratively"), implementation starts now — but "iteratively" for a
-12-phase enterprise redesign means real milestones across multiple
-sessions, not one commit. Concretely, in this session:
+iteratively"), implementation is underway — "iteratively" for a 12-phase
+enterprise redesign means real milestones across multiple sessions, not
+one commit.
 
-1. **Landing M0 now** (AI provider seam + the AI Assistant → Audit
-   Intelligence Engine rename) — small, safe, immediately useful, no
-   dependency on the open decision below.
-2. **§0 needs an answer before M1's schema work starts in earnest**:
-   confirm the recommendation (build the full Process/Risk/Legal/
-   Findings/Maturity model at single-workspace scope now; treat
-   corporate/multi-user roll-up as an explicitly separate, backend-gated
-   phase) is the right call, rather than assuming it.
+**Status as of this update: M0 and M1 are both landed** (single-workspace
+scope, per the confirmed answer to §0's question):
+
+- **M0** — `AiProvider` interface + `NullProvider` wrapping the existing
+  deterministic recommender unchanged (`src/shared/engine/ai/`); "AI
+  Assistant" renamed to "Audit Intelligence Engine" throughout the UI.
+- **M1** — the process-centric data model is real and working end-to-end:
+  `Organisation → Region → OrgSite → OrgDepartment → OrgFunction → Process
+  → Activity`, plus `Risk`/`Control` hanging off each Process, each with
+  direct clause links (`src/shared/types.ts`, new tables in
+  `workspaceSchema.ts`). A **Process Explorer** screen
+  (`src/renderer/src/features/process-explorer/`) lets a user build this
+  hierarchy, add risks/controls, link ISO clauses, or **adopt one of 10
+  seeded starter processes** (`src/shared/process-library/`) covering
+  Permit to Work, Waste Management, Incident Management, Contractor
+  Management, Emergency Preparedness, Training & Competence, Management
+  Review, Legal & Compliance Obligations, Management of Change, and
+  Monitoring/Measurement — each with real risks, controls, and clause
+  links verified to resolve against the actual knowledge base
+  (`tests/processLibrary.test.ts`). The **Programme Builder now supports
+  planning by process**: selecting processes in scope widens the audit's
+  clause set via `collectProcessClauseIds()` (`src/shared/engine/
+  processClauses.ts`, unit-tested), verified end-to-end in a live browser
+  session (process → audit → programme, correct clause count, zero
+  console errors). A **non-destructive migration**
+  (`src/shared/migrations.ts`) backfills any pre-existing `.iaap` file's
+  ad hoc embedded sites/departments into the new normalised tables on
+  first open, verified against real file I/O
+  (`tests/migration.test.ts`) — legacy data is never rewritten, only
+  supplemented.
+- All 45 automated tests pass, both build targets (web + desktop)
+  compile cleanly.
+
+**Next up: M2 (Legal & Compliance module, Phase 2 of the brief)** —
+register, evaluations, clause↔obligation crosswalk — which reuses the
+`process_clause_link`-style pattern already established and slots
+naturally after the Process Explorer, since compliance obligations are
+most useful when tied to the process they govern.

@@ -7,6 +7,7 @@ import PassphraseModal from '../components/PassphraseModal'
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
   { to: '/planner', label: 'Audit Planner', icon: '🗂️' },
+  { to: '/processes', label: 'Process Explorer', icon: '🧭' },
   { to: '/programme', label: 'Programme Builder', icon: '📅' },
   { to: '/clauses', label: 'Clause Explorer', icon: '📖' },
   { to: '/checklist', label: 'Checklist Generator', icon: '✅' },

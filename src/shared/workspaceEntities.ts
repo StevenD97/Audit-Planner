@@ -1,5 +1,6 @@
 import type { Database } from 'sql.js'
 import { WORKSPACE_SCHEMA } from './workspaceSchema'
+import { runSchemaV2Migration } from './migrations'
 
 export type EntityTable =
   | 'audit_projects'
@@ -9,6 +10,15 @@ export type EntityTable =
   | 'gap_assessments'
   | 'readiness_snapshots'
   | 'reports'
+  | 'organisations'
+  | 'regions'
+  | 'org_sites'
+  | 'org_departments'
+  | 'org_functions'
+  | 'processes'
+  | 'activities'
+  | 'risks'
+  | 'controls'
 
 const EXTRA_COLUMNS: Record<EntityTable, string[]> = {
   audit_projects: ['status', 'updated_at'],
@@ -17,7 +27,16 @@ const EXTRA_COLUMNS: Record<EntityTable, string[]> = {
   evidence_plan_items: ['audit_project_id', 'clause_id'],
   gap_assessments: ['audit_project_id', 'clause_id', 'rating'],
   readiness_snapshots: ['audit_project_id', 'taken_at'],
-  reports: ['audit_project_id']
+  reports: ['audit_project_id'],
+  organisations: [],
+  regions: ['organisation_id'],
+  org_sites: ['organisation_id'],
+  org_departments: ['site_id'],
+  org_functions: ['department_id'],
+  processes: ['function_id'],
+  activities: ['process_id'],
+  risks: ['process_id'],
+  controls: ['risk_id']
 }
 
 function toCamel(snake: string): string {
@@ -35,6 +54,7 @@ function toCamel(snake: string): string {
 export class SqlWorkspaceCore {
   constructor(private db: Database) {
     db.run(WORKSPACE_SCHEMA) // idempotent: adds any tables missing from an older file version
+    runSchemaV2Migration(this) // idempotent: no-op once schema_version is already current
   }
 
   export(): Uint8Array {

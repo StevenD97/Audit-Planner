@@ -5,7 +5,16 @@ import type {
   GapAssessment,
   ProgrammeSlot,
   ReadinessSnapshot,
-  ReportRecord
+  ReportRecord,
+  Organisation,
+  Region,
+  OrgSite,
+  OrgDepartment,
+  OrgFunction,
+  Process,
+  Activity,
+  Risk,
+  Control
 } from './types'
 import type { ExportDocument } from './export'
 import type { EntityTable } from './workspaceEntities'
@@ -21,6 +30,15 @@ export interface WorkspaceState {
   gapAssessments: GapAssessment[]
   readinessSnapshots: ReadinessSnapshot[]
   reports: ReportRecord[]
+  organisations: Organisation[]
+  regions: Region[]
+  orgSites: OrgSite[]
+  orgDepartments: OrgDepartment[]
+  orgFunctions: OrgFunction[]
+  processes: Process[]
+  activities: Activity[]
+  risks: Risk[]
+  controls: Control[]
 }
 
 export interface OpenResult {

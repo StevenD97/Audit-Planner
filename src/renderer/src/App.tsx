@@ -4,6 +4,7 @@ import Layout from './app/Layout'
 import { useWorkspaceStore } from './store/workspaceStore'
 import DashboardPage from './features/dashboard/DashboardPage'
 import AuditPlannerPage from './features/audit-planner/AuditPlannerPage'
+import ProcessExplorerPage from './features/process-explorer/ProcessExplorerPage'
 import ProgrammeBuilderPage from './features/programme-builder/ProgrammeBuilderPage'
 import ClauseExplorerPage from './features/clause-explorer/ClauseExplorerPage'
 import ChecklistGeneratorPage from './features/checklist-generator/ChecklistGeneratorPage'
@@ -35,6 +36,7 @@ export default function App(): JSX.Element {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/planner" element={<AuditPlannerPage />} />
+        <Route path="/processes" element={<ProcessExplorerPage />} />
         <Route path="/programme" element={<ProgrammeBuilderPage />} />
         <Route path="/clauses" element={<ClauseExplorerPage />} />
         <Route path="/checklist" element={<ChecklistGeneratorPage />} />

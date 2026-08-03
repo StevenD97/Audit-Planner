@@ -19,7 +19,16 @@ function buildState(ws: BrowserWorkspace): WorkspaceState {
     evidencePlanItems: ws.getAll('evidence_plan_items'),
     gapAssessments: ws.getAll('gap_assessments'),
     readinessSnapshots: ws.getAll('readiness_snapshots'),
-    reports: ws.getAll('reports')
+    reports: ws.getAll('reports'),
+    organisations: ws.getAll('organisations'),
+    regions: ws.getAll('regions'),
+    orgSites: ws.getAll('org_sites'),
+    orgDepartments: ws.getAll('org_departments'),
+    orgFunctions: ws.getAll('org_functions'),
+    processes: ws.getAll('processes'),
+    activities: ws.getAll('activities'),
+    risks: ws.getAll('risks'),
+    controls: ws.getAll('controls')
   }
 }
 

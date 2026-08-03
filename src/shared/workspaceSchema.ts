@@ -73,4 +73,68 @@ CREATE TABLE IF NOT EXISTS app_settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+-- Process-centric organisational model (additive; see
+-- docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md §4). Workspace-scoped master
+-- data, independent of any one audit_projects row.
+CREATE TABLE IF NOT EXISTS organisations (
+  id TEXT PRIMARY KEY,
+  data TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS regions (
+  id TEXT PRIMARY KEY,
+  organisation_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_regions_org ON regions(organisation_id);
+
+CREATE TABLE IF NOT EXISTS org_sites (
+  id TEXT PRIMARY KEY,
+  organisation_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_org_sites_org ON org_sites(organisation_id);
+
+CREATE TABLE IF NOT EXISTS org_departments (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_org_departments_site ON org_departments(site_id);
+
+CREATE TABLE IF NOT EXISTS org_functions (
+  id TEXT PRIMARY KEY,
+  department_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_org_functions_department ON org_functions(department_id);
+
+CREATE TABLE IF NOT EXISTS processes (
+  id TEXT PRIMARY KEY,
+  function_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_processes_function ON processes(function_id);
+
+CREATE TABLE IF NOT EXISTS activities (
+  id TEXT PRIMARY KEY,
+  process_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activities_process ON activities(process_id);
+
+CREATE TABLE IF NOT EXISTS risks (
+  id TEXT PRIMARY KEY,
+  process_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_risks_process ON risks(process_id);
+
+CREATE TABLE IF NOT EXISTS controls (
+  id TEXT PRIMARY KEY,
+  risk_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_controls_risk ON controls(risk_id);
 `
