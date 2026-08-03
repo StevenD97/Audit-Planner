@@ -1,5 +1,7 @@
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { GapRating, RiskLevel } from '@shared/types'
+import { searchClauses, getClauseById } from '@shared/knowledge-base'
 import { useWorkspaceStore } from '../store/workspaceStore'
 
 const RATING_STYLES: Record<GapRating, string> = {
@@ -48,6 +50,100 @@ export function ClauseChip({
     >
       {standardId === 'iso14001' ? '14001' : '45001'} §{clauseNumber}
     </Link>
+  )
+}
+
+/** Add/remove editor for a simple string list (process inputs/activities/outputs/kpis, obligation requirements, ...). */
+export function TagListEditor({
+  label,
+  items,
+  onChange
+}: {
+  label: string
+  items: string[]
+  onChange: (next: string[]) => void
+}): JSX.Element {
+  const [draft, setDraft] = useState('')
+  return (
+    <div>
+      <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{label}</p>
+      <div className="mb-2 flex flex-wrap gap-1">
+        {items.map((item, i) => (
+          <span key={i} className="chip border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700">
+            {item}
+            <button className="ml-1 text-slate-400 hover:text-slate-600" onClick={() => onChange(items.filter((_, j) => j !== i))}>
+              ✕
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-1">
+        <input
+          className="input py-1 text-xs"
+          placeholder={`Add ${label.toLowerCase()}…`}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && draft.trim()) {
+              onChange([...items, draft.trim()])
+              setDraft('')
+            }
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+/** Live-search input for linking an ISO clause by number/keyword — used anywhere a process, control or legal obligation links to clauses. */
+export function ClausePicker({ onPick }: { onPick: (clauseId: string) => void }): JSX.Element {
+  const [q, setQ] = useState('')
+  const results = useMemo(() => (q.trim().length >= 2 ? searchClauses(q).slice(0, 8) : []), [q])
+  return (
+    <div className="relative">
+      <input
+        className="input py-1 text-xs"
+        placeholder="Link a clause… (search by number or keyword)"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
+      {results.length > 0 && (
+        <ul className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
+          {results.map((c) => (
+            <li key={c.id}>
+              <button
+                className="w-full px-2 py-1 text-left text-xs hover:bg-slate-50 dark:hover:bg-slate-700"
+                onClick={() => {
+                  onPick(c.id)
+                  setQ('')
+                }}
+              >
+                {c.standardId === 'iso14001' ? '14001' : '45001'} §{c.clauseNumber} — {c.title}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/** Renders a set of linked clause ids as removable chips (via ClauseChip). */
+export function ClauseLinkList({ clauseIds, onRemove }: { clauseIds: string[]; onRemove: (clauseId: string) => void }): JSX.Element {
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {clauseIds.map((id) => {
+        const clause = getClauseById(id)
+        return (
+          <span key={id} className="inline-flex items-center gap-1">
+            <ClauseChip standardId={id.split('-')[0]} clauseNumber={clause?.clauseNumber ?? id} title={clause?.title} />
+            <button className="text-xs text-slate-400 hover:text-slate-600" onClick={() => onRemove(id)}>
+              ✕
+            </button>
+          </span>
+        )
+      })}
+    </div>
   )
 }
 

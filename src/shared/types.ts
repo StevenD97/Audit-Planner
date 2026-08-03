@@ -140,6 +140,8 @@ export interface AuditProject {
   updatedAt: string
   /** Processes (from the Process Explorer) in scope for this audit, in addition to standard-driven clause scope. */
   processIds?: string[]
+  /** Compliance obligations (from Legal & Compliance) in scope for this audit, in addition to standard-driven clause scope. */
+  obligationIds?: string[]
 }
 
 export type ProgrammeActivityType =
@@ -303,4 +305,43 @@ export interface Control {
   controlType?: string
   /** Which ISO clauses this control is the evidence trail for. */
   clauseIds: string[]
+}
+
+// ---- Legal & compliance obligations (workspace-scoped master data, per
+// docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md §4.3, Phase 2 of the platform
+// strategy). `clauseIds` on ComplianceObligation is the crosswalk in both
+// directions: "clauses impacted by this legal obligation" is the field
+// itself; "legal obligations linked to this clause" is a reverse scan over
+// all obligations for a given clause id (see engine/compliance.ts). ----
+
+export type LegislationCategory = 'environmental' | 'ohs' | 'permit' | 'corporate'
+
+export interface Legislation {
+  id: string
+  title: string
+  jurisdiction?: string
+  category: LegislationCategory
+}
+
+export interface ComplianceObligation {
+  id: string
+  legislationId: string
+  description: string
+  /** Specific requirements under this obligation (e.g. permit conditions), same "array as JSON column" convention as Process's inputs/activities. */
+  requirements: string[]
+  responsiblePerson?: string
+  reviewFrequencyMonths?: number
+  nextReviewAt?: string
+  clauseIds: string[]
+}
+
+export type ComplianceEvaluationStatus = 'compliant' | 'non_compliant' | 'partial' | 'not_evaluated'
+
+export interface ComplianceEvaluation {
+  id: string
+  obligationId: string
+  status: ComplianceEvaluationStatus
+  evaluatedBy?: string
+  evaluatedAt: string
+  evidenceNotes?: string
 }

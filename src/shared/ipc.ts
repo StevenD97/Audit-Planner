@@ -14,7 +14,10 @@ import type {
   Process,
   Activity,
   Risk,
-  Control
+  Control,
+  Legislation,
+  ComplianceObligation,
+  ComplianceEvaluation
 } from './types'
 import type { ExportDocument } from './export'
 import type { EntityTable } from './workspaceEntities'
@@ -39,6 +42,9 @@ export interface WorkspaceState {
   activities: Activity[]
   risks: Risk[]
   controls: Control[]
+  legislation: Legislation[]
+  complianceObligations: ComplianceObligation[]
+  complianceEvaluations: ComplianceEvaluation[]
 }
 
 export interface OpenResult {

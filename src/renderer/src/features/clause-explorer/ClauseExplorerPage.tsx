@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   getClausesByStandard,
   getClause,
@@ -7,12 +7,13 @@ import {
   resolveRelatedClauses,
   resolveCrossStandardEquivalents
 } from '@shared/knowledge-base'
+import { getObligationsForClause } from '@shared/engine/compliance'
 import type { Clause, StandardId } from '@shared/types'
 import { ClauseChip, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { newId } from '@shared/id'
 
-const TABS = ['Requirement', 'Explanation', 'Audit intent', 'Evidence', 'Questions', 'Findings', 'Related'] as const
+const TABS = ['Requirement', 'Explanation', 'Audit intent', 'Evidence', 'Questions', 'Findings', 'Related', 'Legal'] as const
 
 export default function ClauseExplorerPage(): JSX.Element {
   const [params, setParams] = useSearchParams()
@@ -234,6 +235,31 @@ export default function ClauseExplorerPage(): JSX.Element {
                   ))}
                   {selected.potentialFindings.length === 0 && <p className="text-slate-400">No typical findings authored.</p>}
                 </ul>
+              )}
+              {activeTab === 'Legal' && (
+                <div className="space-y-2">
+                  <p className="mb-1 font-medium">Legal obligations linked to this clause</p>
+                  {(() => {
+                    const linked = getObligationsForClause(selected.id, workspace?.complianceObligations ?? [])
+                    if (linked.length === 0) return <p className="text-slate-400">None recorded.</p>
+                    return (
+                      <ul className="space-y-2">
+                        {linked.map((obligation) => {
+                          const legislation = workspace?.legislation.find((l) => l.id === obligation.legislationId)
+                          return (
+                            <li key={obligation.id} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50">
+                              <p className="font-medium">{obligation.description}</p>
+                              {legislation && <p className="text-xs text-slate-500">{legislation.title}</p>}
+                              <Link to={`/legal?legislation=${obligation.legislationId}`} className="text-xs text-brand-600 hover:underline dark:text-brand-400">
+                                View in Legal &amp; Compliance →
+                              </Link>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )
+                  })()}
+                </div>
               )}
               {activeTab === 'Related' && (
                 <div className="space-y-4">

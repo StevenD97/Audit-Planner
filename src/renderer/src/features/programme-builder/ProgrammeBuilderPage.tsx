@@ -5,6 +5,7 @@ import { AuditProjectPicker, useCurrentAuditProject, ClauseChip } from '../../co
 import { getAuditableClauses, getClauseById } from '@shared/knowledge-base'
 import { generateProgramme, findSchedulingConflicts } from '@shared/engine/scheduler'
 import { collectProcessClauseIds } from '@shared/engine/processClauses'
+import { collectObligationClauseIds } from '@shared/engine/compliance'
 import type { ProgrammeActivityType, ProgrammeSlot } from '@shared/types'
 
 const ACTIVITY_LABELS: Record<ProgrammeActivityType, string> = {
@@ -39,18 +40,20 @@ export default function ProgrammeBuilderPage(): JSX.Element {
   if (!project) return <AuditProjectPicker />
 
   const allProcesses = workspace?.processes ?? []
+  const allObligations = workspace?.complianceObligations ?? []
   const processIdsInScope = project.processIds ?? []
+  const obligationIdsInScope = project.obligationIds ?? []
 
   const standardClauses = project.standards.flatMap((s) => getAuditableClauses(s))
-  const processClauseIds = new Set(
-    collectProcessClauseIds(processIdsInScope, allProcesses, workspace?.risks ?? [], workspace?.controls ?? [])
-  )
   const standardClauseIds = new Set(standardClauses.map((c) => c.id))
-  const extraFromProcesses = Array.from(processClauseIds)
-    .filter((id) => !standardClauseIds.has(id))
+
+  const processClauseIds = collectProcessClauseIds(processIdsInScope, allProcesses, workspace?.risks ?? [], workspace?.controls ?? [])
+  const obligationClauseIds = collectObligationClauseIds(obligationIdsInScope, allObligations)
+  const extraClauseIds = new Set([...processClauseIds, ...obligationClauseIds].filter((id) => !standardClauseIds.has(id)))
+  const extraClauses = Array.from(extraClauseIds)
     .map((id) => getClauseById(id))
     .filter((c): c is NonNullable<typeof c> => Boolean(c))
-  const clauses = [...standardClauses, ...extraFromProcesses]
+  const clauses = [...standardClauses, ...extraClauses]
 
   const conflicts = findSchedulingConflicts(slots)
   const conflictSlotIds = new Set(conflicts.flatMap((c) => [c.slotA, c.slotB]))
@@ -60,6 +63,13 @@ export default function ProgrammeBuilderPage(): JSX.Element {
       ? processIdsInScope.filter((id) => id !== processId)
       : [...processIdsInScope, processId]
     await updateAuditProject(project!.id, { processIds: next })
+  }
+
+  async function toggleObligationInScope(obligationId: string): Promise<void> {
+    const next = obligationIdsInScope.includes(obligationId)
+      ? obligationIdsInScope.filter((id) => id !== obligationId)
+      : [...obligationIdsInScope, obligationId]
+    await updateAuditProject(project!.id, { obligationIds: next })
   }
 
   async function autoGenerate(): Promise<void> {
@@ -88,34 +98,66 @@ export default function ProgrammeBuilderPage(): JSX.Element {
       </div>
       <AuditProjectPicker />
 
-      {allProcesses.length > 0 && (
-        <div className="card">
-          <p className="mb-2 text-sm font-medium">
-            Plan by process <span className="font-normal text-slate-400">(optional — adds each process&apos;s linked clauses to scope)</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {allProcesses.map((p) => (
-              <label
-                key={p.id}
-                className={`chip cursor-pointer border ${
-                  processIdsInScope.includes(p.id)
-                    ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
-                    : 'border-slate-200 dark:border-slate-700'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="mr-1"
-                  checked={processIdsInScope.includes(p.id)}
-                  onChange={() => toggleProcessInScope(p.id)}
-                />
-                {p.name}
-              </label>
-            ))}
-          </div>
-          {extraFromProcesses.length > 0 && (
-            <p className="mt-2 text-xs text-slate-500">
-              +{extraFromProcesses.length} clause(s) added to scope from selected processes.
+      {(allProcesses.length > 0 || allObligations.length > 0) && (
+        <div className="card space-y-4">
+          {allProcesses.length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-medium">
+                Plan by process <span className="font-normal text-slate-400">(optional — adds each process&apos;s linked clauses to scope)</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {allProcesses.map((p) => (
+                  <label
+                    key={p.id}
+                    className={`chip cursor-pointer border ${
+                      processIdsInScope.includes(p.id)
+                        ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
+                        : 'border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mr-1"
+                      checked={processIdsInScope.includes(p.id)}
+                      onChange={() => toggleProcessInScope(p.id)}
+                    />
+                    {p.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          {allObligations.length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-medium">
+                Plan by legal obligation{' '}
+                <span className="font-normal text-slate-400">(optional — adds each obligation&apos;s linked clauses to scope)</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {allObligations.map((o) => (
+                  <label
+                    key={o.id}
+                    className={`chip cursor-pointer border ${
+                      obligationIdsInScope.includes(o.id)
+                        ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
+                        : 'border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mr-1"
+                      checked={obligationIdsInScope.includes(o.id)}
+                      onChange={() => toggleObligationInScope(o.id)}
+                    />
+                    {o.description}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          {extraClauses.length > 0 && (
+            <p className="text-xs text-slate-500">
+              +{extraClauses.length} clause(s) added to scope from selected processes/obligations.
             </p>
           )}
         </div>

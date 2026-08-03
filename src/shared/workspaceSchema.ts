@@ -137,4 +137,25 @@ CREATE TABLE IF NOT EXISTS controls (
   data TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_controls_risk ON controls(risk_id);
+
+-- Legal & compliance obligations (additive; see
+-- docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md §4.3).
+CREATE TABLE IF NOT EXISTS legislation (
+  id TEXT PRIMARY KEY,
+  data TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS compliance_obligations (
+  id TEXT PRIMARY KEY,
+  legislation_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_compliance_obligations_legislation ON compliance_obligations(legislation_id);
+
+CREATE TABLE IF NOT EXISTS compliance_evaluations (
+  id TEXT PRIMARY KEY,
+  obligation_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_compliance_evaluations_obligation ON compliance_evaluations(obligation_id);
 `

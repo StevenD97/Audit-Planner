@@ -545,8 +545,42 @@ scope, per the confirmed answer to §0's question):
 - All 45 automated tests pass, both build targets (web + desktop)
   compile cleanly.
 
-**Next up: M2 (Legal & Compliance module, Phase 2 of the brief)** —
-register, evaluations, clause↔obligation crosswalk — which reuses the
-`process_clause_link`-style pattern already established and slots
-naturally after the Process Explorer, since compliance obligations are
-most useful when tied to the process they govern.
+**M2 (Legal & Compliance, Phase 2 of the brief) is also landed:**
+
+- `Legislation → ComplianceObligation → ComplianceEvaluation` entities
+  (`src/shared/types.ts`), same additive-schema convention as M1.
+- A **Legal & Compliance** screen (`src/renderer/src/features/
+  legal-compliance/`) — register legislation, add obligations with
+  requirements/responsible person/review frequency, link ISO clauses via
+  the (now shared) `ClausePicker`, and record compliance evaluations
+  (Compliant/Non-compliant/Partial) with full history retained.
+- **Compliance engine helpers** (`src/shared/engine/compliance.ts`,
+  unit-tested): overdue-review detection, a compliance-rate summary
+  (latest evaluation per obligation, not-yet-evaluated excluded from the
+  rate — mirrors `scoring.ts`'s `computeReadiness` convention), and the
+  bidirectional clause↔obligation lookup the brief asked for explicitly.
+- **Bidirectional linkage is real, not just data-model plumbing**: the
+  Clause Explorer has a new "Legal" tab showing every obligation linked
+  to the clause you're viewing (with a live deep link back into Legal &
+  Compliance), and the Legal & Compliance screen accepts a
+  `?legislation=` query param to land there directly.
+- **Compliance-focused audit programmes**: Programme Builder gained a
+  second "Plan by legal obligation" picker alongside "Plan by process" —
+  selecting obligations in scope widens the clause set the same way
+  processes do (`collectObligationClauseIds`, unit-tested).
+- Refactor along the way: `ClausePicker`/`ClauseLinkList`/`TagListEditor`
+  were extracted from the Process Explorer into `components/common.tsx`
+  once Legal & Compliance needed the same clause-linking UI — reuse, not
+  duplication, now that there were two real call sites.
+- Verified: 53/53 tests pass, typecheck clean, both builds compile, and
+  the full obligation → evaluation → Clause Explorer reverse-link flow
+  was exercised live in a browser (screenshots, zero console errors).
+
+**Next up: M3 (Findings & CAPA lifecycle, Phase 3 of the brief)** —
+promotes the current flat `gap_assessments` rating into a full
+Observation/OFI/Minor NC/Major NC finding with root cause analysis and a
+corrective-action lifecycle (owner/due date/verification/closure), plus
+the open-findings/overdue/recurring/closure-effectiveness dashboards the
+brief asks for. This is the last major entity group before Scoring v2 (M5)
+can be built, since scoring v2 needs real closure-performance data as an
+input.

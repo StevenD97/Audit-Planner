@@ -124,33 +124,42 @@ this does and doesn't protect against**. Two things worth knowing up front:
    Management, Contractor Management, Emergency Preparedness, Training &
    Competence, Management Review, Legal & Compliance Obligations, Change
    Management, Monitoring & Measurement) instead of starting from scratch.
-4. **Programme Builder** — auto-generate a day-by-day schedule from the
-   audit's in-scope clauses; optionally select processes in scope from the
-   Process Explorer to widen the schedule to whatever those processes'
-   risks/controls actually link to, planning by process rather than only
+4. **Legal & Compliance** — register legislation (environmental, H&S,
+   permit conditions, corporate requirements), track compliance
+   obligations with requirements/responsible person/review frequency,
+   link obligations to the ISO clauses they affect, and record compliance
+   evaluations (Compliant/Non-compliant/Partial) over time. Overdue
+   reviews and a compliance-rate summary surface at the top of the
+   screen.
+5. **Programme Builder** — auto-generate a day-by-day schedule from the
+   audit's in-scope clauses; optionally select processes and/or legal
+   obligations in scope to widen the schedule to whatever those actually
+   link to, planning by process or compliance obligation rather than only
    by clause. Adjust activity types/owners/locations afterward.
-5. **Clause Explorer** — browse every clause with its requirement,
+6. **Clause Explorer** — browse every clause with its requirement,
    explanation, audit intent, evidence required, interview questions,
-   typical findings, and related/cross-standard clauses. Global search:
+   typical findings, related/cross-standard clauses, and — via the
+   **Legal** tab — every compliance obligation linked to that clause,
+   with a direct link back into Legal & Compliance. Global search:
    `Ctrl/Cmd+K`.
-6. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
+7. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
    / **Readiness Assessment** — generate and work through audit-ready
    artefacts from the same knowledge base.
-7. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
+8. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
    Monitoring→Management Review; Hazard ID→Risk Assessment→Controls→
    Training→Incident Investigation; Environmental Aspects→Controls→
    Monitoring→Compliance Obligations; plus four more) can be added straight
    into the programme.
-8. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or Gap
+9. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or Gap
    Assessment Report to Excel or PDF.
-9. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
-   deterministic, fully-offline recommender (no external API calls) that
-   suggests questions, trails, weak areas, interview plans, missing
-   evidence and agendas from the current audit's actual data, behind a
-   provider seam (`src/shared/engine/ai/`) designed so a future local LLM
-   (e.g. Ollama) can be swapped in without touching UI code. See
-   `docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md` for the full platform
-   roadmap and `docs/ARCHITECTURE.md` §6 for why it's rule-based rather
+10. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
+    deterministic, fully-offline recommender (no external API calls) that
+    suggests questions, trails, weak areas, interview plans, missing
+    evidence and agendas from the current audit's actual data, behind a
+    provider seam (`src/shared/engine/ai/`) designed so a future local LLM
+    (e.g. Ollama) can be swapped in without touching UI code. See
+    `docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md` for the full platform
+    roadmap and `docs/ARCHITECTURE.md` §6 for why it's rule-based rather
    than LLM-backed today.
 
 ## Project layout
