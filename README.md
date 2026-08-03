@@ -144,15 +144,24 @@ this does and doesn't protect against**. Two things worth knowing up front:
    `Ctrl/Cmd+K`.
 7. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
    / **Readiness Assessment** — generate and work through audit-ready
-   artefacts from the same knowledge base.
-8. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
+   artefacts from the same knowledge base. Any clause rated Minor/Major NC
+   in the Gap Assessment Tool can be **raised as a finding** with one
+   click, pre-filled from the assessment narrative.
+8. **Findings & Corrective Actions** — track findings (Observation / OFI
+   / Minor NC / Major NC) to closure: run a root cause analysis (5 Why,
+   Fishbone, or a simplified TapRooT-style method), log corrective
+   actions with an owner/due date/verification notes, and see open
+   findings, overdue actions, closure rate, and **recurring findings
+   across your entire audit history** (the same clause or process
+   showing up repeatedly across different audits) at a glance.
+9. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
    Monitoring→Management Review; Hazard ID→Risk Assessment→Controls→
    Training→Incident Investigation; Environmental Aspects→Controls→
    Monitoring→Compliance Obligations; plus four more) can be added straight
    into the programme.
-9. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or Gap
-   Assessment Report to Excel or PDF.
-10. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
+10. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or
+    Gap Assessment Report to Excel or PDF.
+11. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
     deterministic, fully-offline recommender (no external API calls) that
     suggests questions, trails, weak areas, interview plans, missing
     evidence and agendas from the current audit's actual data, behind a

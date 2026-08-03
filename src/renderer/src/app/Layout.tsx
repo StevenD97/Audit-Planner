@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: '/checklist', label: 'Checklist Generator', icon: '✅' },
   { to: '/evidence', label: 'Evidence Planner', icon: '🗃️' },
   { to: '/gap-assessment', label: 'Gap Assessment', icon: '📊' },
+  { to: '/findings', label: 'Findings & Actions', icon: '🚩' },
   { to: '/readiness', label: 'Readiness', icon: '🎯' },
   { to: '/trails', label: 'Audit Trails', icon: '🔗' },
   { to: '/reporting', label: 'Reporting', icon: '🖨️' }

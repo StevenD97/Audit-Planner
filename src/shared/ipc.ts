@@ -17,7 +17,10 @@ import type {
   Control,
   Legislation,
   ComplianceObligation,
-  ComplianceEvaluation
+  ComplianceEvaluation,
+  AuditFinding,
+  RootCauseAnalysis,
+  CorrectiveAction
 } from './types'
 import type { ExportDocument } from './export'
 import type { EntityTable } from './workspaceEntities'
@@ -45,6 +48,9 @@ export interface WorkspaceState {
   legislation: Legislation[]
   complianceObligations: ComplianceObligation[]
   complianceEvaluations: ComplianceEvaluation[]
+  auditFindings: AuditFinding[]
+  rootCauseAnalyses: RootCauseAnalysis[]
+  correctiveActions: CorrectiveAction[]
 }
 
 export interface OpenResult {

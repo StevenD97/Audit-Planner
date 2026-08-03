@@ -1,9 +1,14 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { newId } from '@shared/id'
 import { getAuditableClauses } from '@shared/knowledge-base'
-import type { GapRating, RiskLevel } from '@shared/types'
+import type { AuditFinding, GapRating, RiskLevel } from '@shared/types'
 import { AuditProjectPicker, RatingBadge, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+
+function nowIso(): string {
+  return new Date().toISOString()
+}
 
 const RATINGS: { key: GapRating; label: string }[] = [
   { key: 'conforms', label: 'Conforms' },
@@ -16,6 +21,7 @@ export default function GapAssessmentPage(): JSX.Element {
   const project = useCurrentAuditProject()
   const workspace = useWorkspaceStore((s) => s.workspace)
   const upsertGapAssessment = useWorkspaceStore((s) => s.upsertGapAssessment)
+  const upsertEntity = useWorkspaceStore((s) => s.upsertEntity)
 
   const gapAssessments = useMemo(
     () => (workspace?.gapAssessments ?? []).filter((g) => g.auditProjectId === project?.id),
@@ -69,6 +75,23 @@ export default function GapAssessmentPage(): JSX.Element {
     })
   }
 
+  const existingFindingClauseIds = new Set(
+    (workspace?.auditFindings ?? []).filter((f) => f.auditProjectId === project.id && f.clauseId).map((f) => f.clauseId)
+  )
+
+  async function raiseFinding(clauseId: string, rating: GapRating, narrative?: string): Promise<void> {
+    if (rating !== 'minor_nc' && rating !== 'major_nc') return
+    const finding: AuditFinding = {
+      id: newId(),
+      auditProjectId: project!.id,
+      clauseId,
+      category: rating,
+      description: narrative?.trim() || `Nonconformity identified during gap assessment.`,
+      raisedAt: nowIso()
+    }
+    await upsertEntity('audit_findings', { auditProjectId: project!.id }, finding)
+  }
+
   const total = clauses.length || 1
 
   return (
@@ -104,6 +127,7 @@ export default function GapAssessmentPage(): JSX.Element {
               <th>Narrative</th>
               <th>Recommended action</th>
               <th>Risk</th>
+              <th>Finding</th>
             </tr>
           </thead>
           <tbody>
@@ -152,6 +176,18 @@ export default function GapAssessmentPage(): JSX.Element {
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
                     </select>
+                  </td>
+                  <td>
+                    {(ga?.rating === 'minor_nc' || ga?.rating === 'major_nc') &&
+                      (existingFindingClauseIds.has(c.id) ? (
+                        <Link to="/findings" className="text-xs text-brand-600 hover:underline dark:text-brand-400">
+                          View finding →
+                        </Link>
+                      ) : (
+                        <button className="btn-ghost text-xs" onClick={() => raiseFinding(c.id, ga.rating, ga.narrative)}>
+                          Raise as finding
+                        </button>
+                      ))}
                   </td>
                 </tr>
               )

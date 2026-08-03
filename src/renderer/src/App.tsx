@@ -6,6 +6,7 @@ import DashboardPage from './features/dashboard/DashboardPage'
 import AuditPlannerPage from './features/audit-planner/AuditPlannerPage'
 import ProcessExplorerPage from './features/process-explorer/ProcessExplorerPage'
 import LegalCompliancePage from './features/legal-compliance/LegalCompliancePage'
+import FindingsPage from './features/findings/FindingsPage'
 import ProgrammeBuilderPage from './features/programme-builder/ProgrammeBuilderPage'
 import ClauseExplorerPage from './features/clause-explorer/ClauseExplorerPage'
 import ChecklistGeneratorPage from './features/checklist-generator/ChecklistGeneratorPage'
@@ -44,6 +45,7 @@ export default function App(): JSX.Element {
         <Route path="/checklist" element={<ChecklistGeneratorPage />} />
         <Route path="/evidence" element={<EvidencePlannerPage />} />
         <Route path="/gap-assessment" element={<GapAssessmentPage />} />
+        <Route path="/findings" element={<FindingsPage />} />
         <Route path="/readiness" element={<ReadinessPage />} />
         <Route path="/trails" element={<AuditTrailsPage />} />
         <Route path="/reporting" element={<ReportingPage />} />

@@ -22,6 +22,9 @@ export type EntityTable =
   | 'legislation'
   | 'compliance_obligations'
   | 'compliance_evaluations'
+  | 'audit_findings'
+  | 'root_cause_analyses'
+  | 'corrective_actions'
 
 const EXTRA_COLUMNS: Record<EntityTable, string[]> = {
   audit_projects: ['status', 'updated_at'],
@@ -42,7 +45,10 @@ const EXTRA_COLUMNS: Record<EntityTable, string[]> = {
   controls: ['risk_id'],
   legislation: [],
   compliance_obligations: ['legislation_id'],
-  compliance_evaluations: ['obligation_id']
+  compliance_evaluations: ['obligation_id'],
+  audit_findings: ['audit_project_id'],
+  root_cause_analyses: ['finding_id'],
+  corrective_actions: ['finding_id']
 }
 
 function toCamel(snake: string): string {

@@ -576,11 +576,52 @@ scope, per the confirmed answer to §0's question):
   the full obligation → evaluation → Clause Explorer reverse-link flow
   was exercised live in a browser (screenshots, zero console errors).
 
-**Next up: M3 (Findings & CAPA lifecycle, Phase 3 of the brief)** —
-promotes the current flat `gap_assessments` rating into a full
-Observation/OFI/Minor NC/Major NC finding with root cause analysis and a
-corrective-action lifecycle (owner/due date/verification/closure), plus
-the open-findings/overdue/recurring/closure-effectiveness dashboards the
-brief asks for. This is the last major entity group before Scoring v2 (M5)
-can be built, since scoring v2 needs real closure-performance data as an
-input.
+**M3 (Findings & Corrective Action lifecycle, Phase 3 of the brief) is
+also landed:**
+
+- `AuditFinding → RootCauseAnalysis → CorrectiveAction` entities
+  (`src/shared/types.ts`), same additive schema convention. A finding is
+  deliberately distinct from a `gap_assessments` row: gap assessment is
+  "my rating of this clause during this audit" (one per clause);
+  a finding is "a specific thing tracked to closure" (zero, one, or many
+  per clause, and can be raised against a Process instead of a clause).
+- Finding categories exactly as specified: Observation / OFI / Minor NC /
+  Major NC.
+- **Root cause analysis, three real methods**, not just a text box: 5 Why
+  (ordered list of whys), Fishbone (causes grouped under the six classic
+  M categories — People/Process/Equipment/Environment/Materials/
+  Management), and a simplified TapRooT-style method (causal factors +
+  root causes). All backed by structured, typed fields
+  (`RootCauseAnalysis` in `types.ts`), not a single free-text blob.
+- **Corrective action lifecycle**: owner, due date, status (open → in
+  progress → verification pending → closed), verification notes,
+  closed-at timestamp set automatically on closure.
+- **Findings & Actions screen** (`src/renderer/src/features/findings/`):
+  raise/edit findings, run root cause analysis, track corrective actions
+  to closure, all scoped to the current audit project.
+- **Findings engine** (`src/shared/engine/findings.ts`, unit-tested):
+  `isFindingOpen` (open until every action is closed), overdue-action
+  detection, a findings summary (open count + category breakdown +
+  overdue actions), **recurring-findings detection across the whole
+  workspace's audit history** (not just the current audit — this is what
+  "recurring" actually has to mean), and closure effectiveness (closure
+  rate % and % closed on time).
+- **Connected, not a parallel silo**: the Gap Assessment tool gained a
+  "Raise as finding" action on any Minor/Major NC rated clause, which
+  creates a real tracked finding pre-filled from the gap assessment's
+  narrative — the two concepts now hand off to each other instead of
+  living in isolation.
+- Verified: 64/64 tests pass, typecheck clean, both builds compile, and
+  the full gap-assessment → raise-finding → root-cause → corrective-action
+  → closure flow was exercised live in a browser (screenshot, zero
+  console errors).
+
+**Next up: M4 (Risk-based audit planning, Phase 5 of the brief)** —
+a first-class Risk register view with heat maps and coverage-adjustment
+logic (more audit depth where risk/findings/compliance-failures/incidents
+concentrate). The `Risk` entity already exists (M1), so M4 is mostly a
+planning/visualisation layer over data that's already there, plus wiring
+findings/compliance history into the coverage-adjustment logic. This is
+the last entity-shaped milestone before Scoring v2 (M5) can be built for
+real, since scoring v2 needs risk, compliance, and findings/closure data
+all as inputs.

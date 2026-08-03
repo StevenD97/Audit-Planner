@@ -345,3 +345,57 @@ export interface ComplianceEvaluation {
   evaluatedAt: string
   evidenceNotes?: string
 }
+
+// ---- Findings & corrective action lifecycle (per audit project, Phase 3
+// of docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md §4.4). A finding is
+// distinct from a gap_assessments row: gap assessment is "my rating of this
+// clause during this audit" (one per clause), a finding is "a specific
+// thing I'm tracking to closure" (zero, one, or many per clause, and can
+// also be raised against a Process rather than a clause). ----
+
+export type FindingCategory = 'observation' | 'ofi' | 'minor_nc' | 'major_nc'
+
+export interface AuditFinding {
+  id: string
+  auditProjectId: string
+  clauseId?: string
+  processId?: string
+  category: FindingCategory
+  description: string
+  raisedBy?: string
+  raisedAt: string
+}
+
+export type RootCauseMethod = '5_why' | 'fishbone' | 'taproot'
+
+export interface FishboneCategory {
+  category: string
+  causes: string[]
+}
+
+export interface RootCauseAnalysis {
+  id: string
+  findingId: string
+  method: RootCauseMethod
+  /** 5 Why: successive "why" answers, in order. */
+  whys: string[]
+  /** Fishbone: causes grouped under the classic 6M categories (or custom ones). */
+  fishboneCategories: FishboneCategory[]
+  /** TapRooT-style: causal factors identified, and the root cause(s) traced back from them. */
+  causalFactors: string[]
+  rootCauses: string[]
+  summary?: string
+}
+
+export type CorrectiveActionStatus = 'open' | 'in_progress' | 'verification_pending' | 'closed'
+
+export interface CorrectiveAction {
+  id: string
+  findingId: string
+  description: string
+  owner: string
+  dueDate: string
+  status: CorrectiveActionStatus
+  verificationNotes?: string
+  closedAt?: string
+}

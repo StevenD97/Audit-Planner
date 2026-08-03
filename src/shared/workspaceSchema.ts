@@ -158,4 +158,27 @@ CREATE TABLE IF NOT EXISTS compliance_evaluations (
   data TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_compliance_evaluations_obligation ON compliance_evaluations(obligation_id);
+
+-- Findings & corrective action lifecycle (additive; see
+-- docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md §4.4).
+CREATE TABLE IF NOT EXISTS audit_findings (
+  id TEXT PRIMARY KEY,
+  audit_project_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_audit_findings_project ON audit_findings(audit_project_id);
+
+CREATE TABLE IF NOT EXISTS root_cause_analyses (
+  id TEXT PRIMARY KEY,
+  finding_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_root_cause_analyses_finding ON root_cause_analyses(finding_id);
+
+CREATE TABLE IF NOT EXISTS corrective_actions (
+  id TEXT PRIMARY KEY,
+  finding_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_corrective_actions_finding ON corrective_actions(finding_id);
 `
