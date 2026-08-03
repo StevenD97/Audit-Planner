@@ -173,10 +173,10 @@ export function AuditProjectPicker(): JSX.Element {
     return (
       <EmptyState
         title="No audit projects yet"
-        hint="Create your first audit in the Audit Planner to unlock this module."
+        hint="Start an audit plan to unlock this module."
         action={
-          <Link to="/planner" className="btn-primary">
-            Go to Audit Planner
+          <Link to="/wizard" className="btn-primary">
+            Start Audit Plan
           </Link>
         }
       />

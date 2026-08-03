@@ -4,24 +4,33 @@ import { useWorkspaceStore } from '../store/workspaceStore'
 import AiAssistantPanel from '../features/ai-assistant/AiAssistantPanel'
 import PassphraseModal from '../components/PassphraseModal'
 
+// Setup screens (Audit Planner, Clause Explorer, Checklist Generator, Evidence
+// Planner, Gap Assessment) are folded into the step-by-step Audit Wizard
+// (reached from the Dashboard) and intentionally left off this list — the
+// wizard is now the primary path through that work, though the underlying
+// routes still exist for direct/deep-linked access (e.g. clause search).
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
-  { to: '/planner', label: 'Audit Planner', icon: '🗂️' },
-  { to: '/processes', label: 'Process Explorer', icon: '🧭' },
-  { to: '/legal', label: 'Legal & Compliance', icon: '⚖️' },
-  { to: '/programme', label: 'Programme Builder', icon: '📅' },
-  { to: '/clauses', label: 'Clause Explorer', icon: '📖' },
-  { to: '/checklist', label: 'Checklist Generator', icon: '✅' },
-  { to: '/sampling', label: 'Sampling Plans', icon: '🎲' },
-  { to: '/evidence', label: 'Evidence Planner', icon: '🗃️' },
-  { to: '/gap-assessment', label: 'Gap Assessment', icon: '📊' },
-  { to: '/findings', label: 'Findings & Actions', icon: '🚩' },
-  { to: '/risk-register', label: 'Risk Register', icon: '🔥' },
-  { to: '/readiness', label: 'Readiness', icon: '🎯' },
-  { to: '/maturity', label: 'Maturity', icon: '🕸️' },
-  { to: '/trails', label: 'Audit Trails', icon: '🔗' },
-  { to: '/reporting', label: 'Reporting', icon: '🖨️' }
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/processes', label: 'Process Explorer' },
+  { to: '/legal', label: 'Legal & Compliance' },
+  { to: '/programme', label: 'Programme Builder' },
+  { to: '/sampling', label: 'Sampling Plans' },
+  { to: '/findings', label: 'Findings & Actions' },
+  { to: '/risk-register', label: 'Risk Register' },
+  { to: '/readiness', label: 'Readiness' },
+  { to: '/maturity', label: 'Maturity' },
+  { to: '/trails', label: 'Audit Trails' },
+  { to: '/reporting', label: 'Reporting' }
 ]
+
+function initials(label: string): string {
+  const letters = label
+    .split(/[\s&]+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+  return letters.slice(0, 2).toUpperCase()
+}
 
 export default function Layout({ children }: { children: ReactNode }): JSX.Element {
   const [collapsed, setCollapsed] = useState(false)
@@ -96,8 +105,7 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
                 }`
               }
             >
-              <span>{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
+              {collapsed ? <span className="text-xs font-semibold">{initials(item.label)}</span> : <span>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
@@ -106,7 +114,7 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
             className="btn w-full justify-center bg-intelligence-600 text-white hover:bg-intelligence-700"
             onClick={() => setAiPanelOpen(!aiPanelOpen)}
           >
-            🤖 {!collapsed && 'Audit Intelligence Engine'}
+            {collapsed ? 'AI' : 'Audit Intelligence Engine'}
           </button>
         </div>
       </aside>

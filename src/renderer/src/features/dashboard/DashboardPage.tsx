@@ -36,9 +36,9 @@ export default function DashboardPage(): JSX.Element {
   const mostImminent = upcoming[0]
   const imminentReadiness = mostImminent ? readinessFor(mostImminent, gapAssessments) : null
 
-  async function quickNewAudit(): Promise<void> {
+  async function startAuditPlan(): Promise<void> {
     const project = await createAuditProject({ name: 'Untitled Audit' })
-    navigate(`/planner?project=${project.id}`)
+    navigate(`/wizard?project=${project.id}&step=context`)
   }
 
   return (
@@ -46,8 +46,8 @@ export default function DashboardPage(): JSX.Element {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
-          <button className="btn-primary" onClick={quickNewAudit}>
-            + New Audit
+          <button className="btn-primary" onClick={startAuditPlan}>
+            Start Audit Plan
           </button>
           <Link to="/reporting" className="btn-secondary">
             Generate Prep Pack
@@ -59,7 +59,7 @@ export default function DashboardPage(): JSX.Element {
         <div className="card lg:col-span-2">
           <h2 className="mb-3 text-lg font-semibold">Upcoming audits</h2>
           {upcoming.length === 0 ? (
-            <p className="text-sm text-slate-500">No upcoming audits. Create one from the Audit Planner.</p>
+            <p className="text-sm text-slate-500">No upcoming audits. Click &quot;Start Audit Plan&quot; above to begin.</p>
           ) : (
             <div className="space-y-3">
               {upcoming.map((p) => {

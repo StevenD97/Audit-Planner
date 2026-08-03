@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './app/Layout'
 import { useWorkspaceStore } from './store/workspaceStore'
 import DashboardPage from './features/dashboard/DashboardPage'
-import AuditPlannerPage from './features/audit-planner/AuditPlannerPage'
+import AuditWizardPage from './features/audit-wizard/AuditWizardPage'
 import ProcessExplorerPage from './features/process-explorer/ProcessExplorerPage'
 import LegalCompliancePage from './features/legal-compliance/LegalCompliancePage'
 import FindingsPage from './features/findings/FindingsPage'
@@ -14,7 +14,6 @@ import ProgrammeBuilderPage from './features/programme-builder/ProgrammeBuilderP
 import ClauseExplorerPage from './features/clause-explorer/ClauseExplorerPage'
 import ChecklistGeneratorPage from './features/checklist-generator/ChecklistGeneratorPage'
 import EvidencePlannerPage from './features/evidence-planner/EvidencePlannerPage'
-import GapAssessmentPage from './features/gap-assessment/GapAssessmentPage'
 import ReadinessPage from './features/readiness/ReadinessPage'
 import AuditTrailsPage from './features/audit-trails/AuditTrailsPage'
 import ReportingPage from './features/reporting/ReportingPage'
@@ -40,7 +39,7 @@ export default function App(): JSX.Element {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/planner" element={<AuditPlannerPage />} />
+        <Route path="/wizard" element={<AuditWizardPage />} />
         <Route path="/processes" element={<ProcessExplorerPage />} />
         <Route path="/legal" element={<LegalCompliancePage />} />
         <Route path="/programme" element={<ProgrammeBuilderPage />} />
@@ -48,7 +47,6 @@ export default function App(): JSX.Element {
         <Route path="/checklist" element={<ChecklistGeneratorPage />} />
         <Route path="/sampling" element={<SamplingPlansPage />} />
         <Route path="/evidence" element={<EvidencePlannerPage />} />
-        <Route path="/gap-assessment" element={<GapAssessmentPage />} />
         <Route path="/findings" element={<FindingsPage />} />
         <Route path="/risk-register" element={<RiskRegisterPage />} />
         <Route path="/readiness" element={<ReadinessPage />} />

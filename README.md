@@ -133,8 +133,18 @@ this does and doesn't protect against**. Two things worth knowing up front:
 1. **New Audit** (or `Ctrl/Cmd+N`) creates an in-memory workspace — save it
    anywhere as a `.iaap` file (SQLite) via **Save**/**Save As** whenever you
    want it persisted; it autosaves every 60s once a file path exists.
-2. **Audit Planner** — choose ISO 14001, ISO 45001, or both (combined),
-   define scope, sites, departments, dates and team.
+2. **Audit Wizard** — click **Start Audit Plan** on the Dashboard to set
+   the standard(s), scope, sites/departments, dates and team once, then
+   the wizard walks you through every in-scope clause one at a time: its
+   context (requirement, explanation, audit intent, interview questions),
+   the evidence to gather (auto-generated per clause, with status/owner/
+   notes), and your rating/narrative/recommended action — with a live
+   readiness score in the header. A clause rated Minor/Major NC is
+   automatically raised as a finding. The last step shows the final
+   readiness score and an **action plan** assembled automatically from
+   everything you entered — no separate report-writing pass. This
+   replaced the old standalone Audit Planner and Gap Assessment Tool
+   screens; the sidebar was condensed accordingly (16 items → 11).
 3. **Process Explorer** — model your organisation as Organisation → Site →
    Department → Function → Process, each process with its own inputs/
    activities/outputs/KPIs, risks (with likelihood/severity) and controls,
@@ -167,13 +177,15 @@ this does and doesn't protect against**. Two things worth knowing up front:
    explanation, audit intent, evidence required, interview questions,
    typical findings, related/cross-standard clauses, and — via the
    **Legal** tab — every compliance obligation linked to that clause,
-   with a direct link back into Legal & Compliance. Global search:
-   `Ctrl/Cmd+K`.
-8. **Checklist Generator** / **Evidence Planner** / **Gap Assessment Tool**
-   — generate and work through audit-ready artefacts from the same
-   knowledge base. Any clause rated Minor/Major NC in the Gap Assessment
-   Tool can be **raised as a finding** with one click, pre-filled from
-   the assessment narrative.
+   with a direct link back into Legal & Compliance. Not in the sidebar
+   (the Audit Wizard covers this content per-clause during the
+   walkthrough) but reachable any time via global search: `Ctrl/Cmd+K`.
+8. **Checklist Generator** / **Evidence Planner** — bulk, filterable views
+   over the same checklist/evidence data the Audit Wizard creates per
+   clause as you walk through it; useful for cross-clause filtering by
+   risk/process or reviewing everything outstanding at a glance. Not in
+   the sidebar (the wizard is the primary path in) but still directly
+   reachable, including via clause links and global search.
    **Sampling Plans** recommends a sample size and states its rationale
    plainly — judgment/risk-based/random/stratified, each explicitly
    labelled as a practical heuristic rather than a formal statistical
@@ -210,7 +222,7 @@ this does and doesn't protect against**. Two things worth knowing up front:
     straight into the programme.
 12. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or
     Gap Assessment Report to Excel or PDF.
-13. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
+13. **Audit Intelligence Engine** (button at the bottom of the sidebar) — a
     deterministic, fully-offline recommender (no external API calls) that
     suggests questions, trails, weak areas, interview plans, missing
     evidence and agendas from the current audit's actual data — every
