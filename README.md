@@ -30,6 +30,25 @@ CSS, Zustand, SQLite via `sql.js` (WASM, no native build step), `exceljs` /
 The same renderer source also builds as a **plain static web app** (no
 Electron) — see "Web build & deployment" below.
 
+## Visual design system
+
+The app's colour, type and component tokens follow a design system extracted
+from a "DATUM" high-fidelity blueprint (an external enterprise redesign
+concept authored in Claude Design): a graphite-navy nav rail with a
+cyan-teal accent, one blue "action" colour for buttons/links/active states,
+a five-state semantic status palette (Ready/Warning/Non-conforming/Critical/
+Neutral), and IBM Plex Sans/Mono typography (self-hosted via
+`@fontsource/ibm-plex-sans` and `@fontsource/ibm-plex-mono` so it works
+fully offline in the desktop build). This is a **visual reskin only** —
+colours, fonts, spacing and component styling in `tailwind.config.js` and
+`src/renderer/src/index.css`. The blueprint's much larger proposal (a
+"DATUM" rebrand, a 7-level Group→Region→Operation→Area→Process→Risk→Control
+org hierarchy, cross-site/cross-org rollups, mining-industry modules) was
+deliberately **not** adopted: it assumes a multi-org backend, which conflicts
+with this project's single-workspace, no-backend constraint (see §0 of
+`docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md`). The app's data model,
+information architecture and navigation are unchanged.
+
 ## Getting started
 
 ```bash

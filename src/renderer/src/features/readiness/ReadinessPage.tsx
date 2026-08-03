@@ -212,7 +212,7 @@ function Sparkline({ values }: { values: number[] }): JSX.Element {
     .join(' ')
   return (
     <svg width={width} height={height} className="w-full">
-      <polyline points={points} fill="none" stroke="#0f766e" strokeWidth={2} />
+      <polyline points={points} fill="none" stroke="#1F5FA8" strokeWidth={2} />
     </svg>
   )
 }

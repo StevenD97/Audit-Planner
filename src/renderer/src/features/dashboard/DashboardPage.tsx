@@ -155,7 +155,7 @@ function ReadinessGauge({ pct }: { pct: number }): JSX.Element {
     <div
       className="flex h-32 w-32 items-center justify-center rounded-full"
       style={{
-        background: `conic-gradient(#0f766e ${angle}deg, #e2e8f0 ${angle}deg)`
+        background: `conic-gradient(#1F5FA8 ${angle}deg, #e2e8f0 ${angle}deg)`
       }}
     >
       <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white text-xl font-bold dark:bg-slate-800">

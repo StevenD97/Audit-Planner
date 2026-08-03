@@ -47,9 +47,9 @@ export default function AiAssistantPanel({ onClose }: { onClose: () => void }): 
   }, [project, workspace])
 
   return (
-    <div className="fixed inset-y-0 right-0 z-30 flex w-96 flex-col border-l border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800">
-      <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="font-semibold">🤖 Audit Intelligence Engine</h2>
+    <div className="fixed inset-y-0 right-0 z-30 flex w-96 flex-col border-l-2 border-intelligence-500 bg-white shadow-2xl dark:bg-slate-800">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-intelligence-50 p-4 dark:border-slate-700 dark:bg-intelligence-900/20">
+        <h2 className="font-semibold text-intelligence-700 dark:text-intelligence-400">🤖 Audit Intelligence Engine</h2>
         <button className="btn-ghost" onClick={onClose}>
           ✕
         </button>
@@ -65,7 +65,9 @@ export default function AiAssistantPanel({ onClose }: { onClose: () => void }): 
                 key={a.key}
                 onClick={() => setActive(a.key)}
                 className={`rounded-lg border p-2 text-left text-xs font-medium ${
-                  active === a.key ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30' : 'border-slate-200 dark:border-slate-700'
+                  active === a.key
+                    ? 'border-intelligence-500 bg-intelligence-50 dark:bg-intelligence-900/30'
+                    : 'border-slate-200 dark:border-slate-700'
                 }`}
               >
                 {a.label}

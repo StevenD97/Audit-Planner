@@ -68,11 +68,20 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
   return (
     <div className="flex h-screen overflow-hidden">
       <aside
-        className={`flex flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-700 dark:bg-slate-800 ${collapsed ? 'w-16' : 'w-60'}`}
+        className={`flex flex-col border-r border-black/10 bg-[#0E1520] transition-all dark:bg-[#070A0E] ${collapsed ? 'w-16' : 'w-60'}`}
       >
         <div className="flex items-center justify-between px-4 py-4">
-          {!collapsed && <span className="text-lg font-bold text-brand-700 dark:text-brand-400">Audit Planner</span>}
-          <button className="btn-ghost !px-2" onClick={() => setCollapsed((c) => !c)} title="Toggle sidebar">
+          {!collapsed && (
+            <span className="flex items-center gap-2 text-lg font-bold text-white">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-accent-500" />
+              Audit Planner
+            </span>
+          )}
+          <button
+            className="rounded px-2 py-1 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            onClick={() => setCollapsed((c) => !c)}
+            title="Toggle sidebar"
+          >
             {collapsed ? '»' : '«'}
           </button>
         </div>
@@ -82,10 +91,8 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'
-                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+                `flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white/90'
                 }`
               }
             >
@@ -95,7 +102,10 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
           ))}
         </nav>
         <div className="p-3">
-          <button className="btn-secondary w-full justify-center" onClick={() => setAiPanelOpen(!aiPanelOpen)}>
+          <button
+            className="btn w-full justify-center bg-intelligence-600 text-white hover:bg-intelligence-700"
+            onClick={() => setAiPanelOpen(!aiPanelOpen)}
+          >
             🤖 {!collapsed && 'Audit Intelligence Engine'}
           </button>
         </div>

@@ -60,7 +60,7 @@ function SpiderChart({ scores }: { scores: Record<MaturityDimension, MaturityLev
           </g>
         )
       })}
-      <polygon points={polygonPoints} fill="#0f766e33" stroke="#0f766e" strokeWidth={2} />
+      <polygon points={polygonPoints} fill="#1F5FA833" stroke="#1F5FA8" strokeWidth={2} />
     </svg>
   )
 }
