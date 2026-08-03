@@ -90,7 +90,7 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
         </nav>
         <div className="p-3">
           <button className="btn-secondary w-full justify-center" onClick={() => setAiPanelOpen(!aiPanelOpen)}>
-            🤖 {!collapsed && 'AI Assistant'}
+            🤖 {!collapsed && 'Audit Intelligence Engine'}
           </button>
         </div>
       </aside>

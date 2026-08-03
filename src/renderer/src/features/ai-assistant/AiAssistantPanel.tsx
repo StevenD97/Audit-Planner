@@ -1,17 +1,12 @@
 import { useMemo, useState } from 'react'
 import { newId } from '@shared/id'
 import { getAuditableClauses } from '@shared/knowledge-base'
-import {
-  recommendQuestions,
-  suggestAuditTrails,
-  identifyWeakAreas,
-  generateInterviewPlan,
-  highlightMissingEvidence,
-  generateAgenda,
-  type RecommenderContext
-} from '@shared/engine/recommender'
+import { getActiveProvider } from '@shared/engine/ai'
+import type { RecommenderContext } from '@shared/engine/recommender'
 import { ClauseChip, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+
+const ai = getActiveProvider()
 
 type ActionKey = 'questions' | 'trails' | 'weak' | 'interviewPlan' | 'missingEvidence' | 'agenda'
 
@@ -45,7 +40,7 @@ export default function AiAssistantPanel({ onClose }: { onClose: () => void }): 
   return (
     <div className="fixed inset-y-0 right-0 z-30 flex w-96 flex-col border-l border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800">
       <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="font-semibold">🤖 AI Assistant</h2>
+        <h2 className="font-semibold">🤖 Audit Intelligence Engine</h2>
         <button className="btn-ghost" onClick={onClose}>
           ✕
         </button>
@@ -95,7 +90,7 @@ function QuestionsView({
   onInsert: (items: any[]) => Promise<void>
   auditProjectId: string
 }): JSX.Element {
-  const recs = recommendQuestions(ctx).slice(0, 8)
+  const recs = ai.recommendQuestions(ctx).slice(0, 8)
   async function insertAll(): Promise<void> {
     const items = recs.flatMap((r) =>
       r.questions.map((q) => ({
@@ -130,7 +125,7 @@ function QuestionsView({
 }
 
 function TrailsView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
-  const { canonical, customSeedClause, customTrail } = suggestAuditTrails(ctx)
+  const { canonical, customSeedClause, customTrail } = ai.suggestAuditTrails(ctx)
   return (
     <div className="space-y-3">
       {canonical.map((t) => (
@@ -156,7 +151,7 @@ function TrailsView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
 }
 
 function WeakAreasView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
-  const weak = identifyWeakAreas(ctx)
+  const weak = ai.identifyWeakAreas(ctx)
   return (
     <ul className="space-y-2">
       {weak.map((w) => (
@@ -172,7 +167,7 @@ function WeakAreasView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
 }
 
 function InterviewPlanView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
-  const plan = generateInterviewPlan(ctx)
+  const plan = ai.generateInterviewPlan(ctx)
   return (
     <div className="space-y-3">
       {plan.map((block) => (
@@ -202,7 +197,7 @@ function MissingEvidenceView({
   onInsert: (items: any[]) => Promise<void>
   auditProjectId: string
 }): JSX.Element {
-  const missing = highlightMissingEvidence(ctx)
+  const missing = ai.highlightMissingEvidence(ctx)
   async function insertAll(): Promise<void> {
     const items = missing.map((m) => ({
       id: newId(),
@@ -234,7 +229,7 @@ function MissingEvidenceView({
 }
 
 function AgendaView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
-  const agenda = generateAgenda(ctx)
+  const agenda = ai.generateAgenda(ctx)
   return (
     <ul className="space-y-1 text-xs">
       {agenda.map((item, i) => (
