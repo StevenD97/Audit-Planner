@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: '/programme', label: 'Programme Builder', icon: '📅' },
   { to: '/clauses', label: 'Clause Explorer', icon: '📖' },
   { to: '/checklist', label: 'Checklist Generator', icon: '✅' },
+  { to: '/sampling', label: 'Sampling Plans', icon: '🎲' },
   { to: '/evidence', label: 'Evidence Planner', icon: '🗃️' },
   { to: '/gap-assessment', label: 'Gap Assessment', icon: '📊' },
   { to: '/findings', label: 'Findings & Actions', icon: '🚩' },

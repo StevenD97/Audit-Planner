@@ -20,7 +20,8 @@ import type {
   ComplianceEvaluation,
   AuditFinding,
   RootCauseAnalysis,
-  CorrectiveAction
+  CorrectiveAction,
+  SamplingPlan
 } from './types'
 import type { ExportDocument } from './export'
 import type { EntityTable } from './workspaceEntities'
@@ -51,6 +52,7 @@ export interface WorkspaceState {
   auditFindings: AuditFinding[]
   rootCauseAnalyses: RootCauseAnalysis[]
   correctiveActions: CorrectiveAction[]
+  samplingPlans: SamplingPlan[]
 }
 
 export interface OpenResult {

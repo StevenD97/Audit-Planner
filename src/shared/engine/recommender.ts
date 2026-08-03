@@ -4,26 +4,67 @@ import type {
   GapAssessment,
   InterviewQuestion,
   ProgrammeSlot,
-  StandardId
+  StandardId,
+  AuditFinding,
+  CorrectiveAction,
+  ComplianceObligation,
+  ComplianceEvaluation,
+  Risk,
+  Control,
+  Process
 } from '../types'
-import { computeReadiness } from './scoring'
+import { computeClauseScoreV2, type ScoringV2Context } from './scoringV2'
+import { computeClosureEffectiveness, getRecurringFindings, type RecurringFinding } from './findings'
+import { collectProcessClauseIds } from './processClauses'
+import { computeCoveragePriority } from './riskHeatmap'
 import { suggestCanonicalTrails, buildCustomTrail } from './trailBuilder'
 import type { AuditTrailDefinition } from '../types'
 
 /**
- * Deterministic, offline "AI Assistant" — see docs/ARCHITECTURE.md §6 for why
- * this is a rule/graph engine rather than an LLM call. Every function here
- * takes the current audit project's data plus the relevant knowledge-base
- * clauses and returns structured recommendations the UI renders as
+ * Deterministic, offline "Audit Intelligence Engine" — see docs/ARCHITECTURE.md
+ * §6 for why this is a rule/graph engine rather than an LLM call. Every
+ * function here takes the current audit project's data (workspace-wide,
+ * unfiltered — each function filters by `auditProjectId` itself where
+ * "current audit only" is the right scope) plus the relevant knowledge-base
+ * clauses, and returns structured recommendations the UI renders as
  * "insert into..." cards, never raw free text.
+ *
+ * As of docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md's M6, weak-area/priority
+ * scoring is computed via engine/scoringV2.ts (the same explainable,
+ * multi-input model the Readiness Assessment screen uses) rather than the
+ * older engine/scoring.ts, so this engine and the readiness score agree with
+ * each other and every reason shown here is a real ScoreDriver label, not a
+ * separately-maintained heuristic.
  */
 
 export interface RecommenderContext {
+  auditProjectId: string
   standardIds: StandardId[]
   scopeClauses: Clause[]
   gapAssessments: GapAssessment[]
   evidencePlanItems: EvidencePlanItem[]
+  auditFindings: AuditFinding[]
+  correctiveActions: CorrectiveAction[]
+  complianceObligations: ComplianceObligation[]
+  complianceEvaluations: ComplianceEvaluation[]
+  risks: Risk[]
+  controls: Control[]
+  processes: Process[]
   programmeSlots?: ProgrammeSlot[]
+}
+
+function toScoringContext(ctx: RecommenderContext): ScoringV2Context {
+  return {
+    gapAssessments: ctx.gapAssessments,
+    auditFindings: ctx.auditFindings,
+    correctiveActions: ctx.correctiveActions,
+    complianceObligations: ctx.complianceObligations,
+    complianceEvaluations: ctx.complianceEvaluations,
+    evidencePlanItems: ctx.evidencePlanItems,
+    risks: ctx.risks,
+    controls: ctx.controls,
+    processes: ctx.processes
+  }
 }
 
 export interface QuestionRecommendation {
@@ -35,66 +76,65 @@ export interface QuestionRecommendation {
   questions: InterviewQuestion[]
 }
 
-/** 1. Recommend audit questions, ranked by prior NC history / risk / missing evidence. */
+/** 1. Recommend audit questions, ranked by the same explainable score the Readiness Assessment shows (lower score = higher priority). */
 export function recommendQuestions(ctx: RecommenderContext): QuestionRecommendation[] {
-  const readiness = computeReadiness(ctx.scopeClauses, ctx.gapAssessments)
-  const scoreByClause = new Map(readiness.byClause.map((c) => [c.clauseId, c]))
-  const evidenceGapByClause = missingEvidenceMap(ctx)
-
+  const scoringCtx = toScoringContext(ctx)
   return ctx.scopeClauses
     .filter((c) => c.interviewQuestions.length > 0)
     .map((clause) => {
-      const rated = scoreByClause.get(clause.id)
-      const reasons: string[] = []
-      let priorityScore = 0
-
-      if (rated?.rating === 'major_nc') {
-        priorityScore += 50
-        reasons.push('Previously rated Major NC')
-      } else if (rated?.rating === 'minor_nc') {
-        priorityScore += 30
-        reasons.push('Previously rated Minor NC')
-      } else if (rated?.rating === 'ofi') {
-        priorityScore += 10
-        reasons.push('Previously rated an Opportunity for Improvement')
-      }
-
-      const maxRiskWeight = Math.max(0, ...clause.riskPrompts.map((r) => r.riskWeight))
-      priorityScore += maxRiskWeight * 5
-      if (maxRiskWeight >= 4) reasons.push('High risk-weighted clause')
-
-      const missingEvidenceCount = evidenceGapByClause.get(clause.id) ?? 0
-      if (missingEvidenceCount > 0) {
-        priorityScore += missingEvidenceCount * 8
-        reasons.push(`${missingEvidenceCount} evidence item(s) not yet obtained`)
-      }
-
-      if (reasons.length === 0) reasons.push('Standard coverage')
-
+      const scored = computeClauseScoreV2(clause.id, ctx.auditProjectId, scoringCtx)
       return {
         clauseId: clause.id,
         clauseNumber: clause.clauseNumber,
         clauseTitle: clause.title,
-        priorityScore,
-        reasons,
+        priorityScore: 100 - scored.score,
+        reasons: scored.drivers.length > 0 ? scored.drivers.map((d) => d.label) : ['Standard coverage'],
         questions: clause.interviewQuestions
       }
     })
     .sort((a, b) => b.priorityScore - a.priorityScore)
 }
 
-/** 2. Suggest audit trails: canonical catalogue plus a custom trail from the weakest clause. */
+export interface ProcessTrailStep {
+  process: Process
+  risks: Risk[]
+  controls: Control[]
+  clauseIds: string[]
+}
+
+/** 2. Suggest audit trails: the canonical catalogue, a custom clause-graph trail from the weakest clause, and a process-graph trail (Process -> Risk -> Control -> Clauses) from the highest coverage-priority process. */
 export function suggestAuditTrails(ctx: RecommenderContext): {
   canonical: AuditTrailDefinition[]
   customSeedClause?: Clause
   customTrail?: ReturnType<typeof buildCustomTrail>
+  processTrail?: ProcessTrailStep
 } {
   const canonical = suggestCanonicalTrails(ctx.standardIds)
+
   const weak = identifyWeakAreas(ctx)[0]
-  if (!weak) return { canonical }
-  const seedClause = ctx.scopeClauses.find((c) => c.id === weak.clauseId)
-  if (!seedClause) return { canonical }
-  return { canonical, customSeedClause: seedClause, customTrail: buildCustomTrail(seedClause) }
+  const seedClause = weak ? ctx.scopeClauses.find((c) => c.id === weak.clauseId) : undefined
+  const customTrail = seedClause ? buildCustomTrail(seedClause) : undefined
+
+  const priorities = computeCoveragePriority(
+    ctx.processes,
+    ctx.risks,
+    ctx.controls,
+    ctx.auditFindings,
+    ctx.complianceObligations,
+    ctx.complianceEvaluations
+  )
+  const topPriority = priorities.find((p) => p.score > 0)
+  const topProcess = topPriority && ctx.processes.find((p) => p.id === topPriority.processId)
+  let processTrail: ProcessTrailStep | undefined
+  if (topProcess) {
+    const risks = ctx.risks.filter((r) => r.processId === topProcess.id)
+    const riskIds = new Set(risks.map((r) => r.id))
+    const controls = ctx.controls.filter((c) => riskIds.has(c.riskId))
+    const clauseIds = collectProcessClauseIds([topProcess.id], ctx.processes, ctx.risks, ctx.controls)
+    processTrail = { process: topProcess, risks, controls, clauseIds }
+  }
+
+  return { canonical, customSeedClause: seedClause, customTrail, processTrail }
 }
 
 export interface WeakAreaResult {
@@ -102,35 +142,25 @@ export interface WeakAreaResult {
   clauseNumber: string
   title: string
   score: number
-  rating: string
   reasons: string[]
 }
 
-/** 3. Identify likely weak areas — lowest scoring clauses first. */
+/** 3. Identify likely weak areas — lowest v2-scoring clauses first, with the exact drivers behind each score. */
 export function identifyWeakAreas(ctx: RecommenderContext, limit = 10): WeakAreaResult[] {
-  const readiness = computeReadiness(ctx.scopeClauses, ctx.gapAssessments)
-  const evidenceGapByClause = missingEvidenceMap(ctx)
-
-  return readiness.byClause
-    .map((c) => {
-      const reasons: string[] = []
-      if (c.rating === 'major_nc') reasons.push('Major nonconformity on record')
-      if (c.rating === 'minor_nc') reasons.push('Minor nonconformity on record')
-      if (c.rating === 'not_assessed') reasons.push('Not yet assessed')
-      const gaps = evidenceGapByClause.get(c.clauseId) ?? 0
-      if (gaps > 0) reasons.push(`${gaps} evidence item(s) outstanding`)
-      return { ...c, reasons, effectiveScore: c.score ?? 50 }
+  const scoringCtx = toScoringContext(ctx)
+  return ctx.scopeClauses
+    .map((clause) => {
+      const scored = computeClauseScoreV2(clause.id, ctx.auditProjectId, scoringCtx)
+      return {
+        clauseId: clause.id,
+        clauseNumber: clause.clauseNumber,
+        title: clause.title,
+        score: scored.score,
+        reasons: scored.drivers.map((d) => d.label)
+      }
     })
-    .sort((a, b) => a.effectiveScore - b.effectiveScore)
+    .sort((a, b) => a.score - b.score)
     .slice(0, limit)
-    .map(({ clauseId, clauseNumber, title, score, rating, reasons }) => ({
-      clauseId,
-      clauseNumber,
-      title,
-      score: score ?? 0,
-      rating,
-      reasons
-    }))
 }
 
 export interface InterviewPlanBlock {
@@ -174,13 +204,14 @@ export interface MissingEvidenceItem {
   category: string
 }
 
-/** 5. Highlight missing evidence — required by the knowledge base but not marked obtained in the Evidence Planner. */
+/** 5. Highlight missing evidence — required by the knowledge base but not marked obtained in the Evidence Planner, for this audit project. */
 export function highlightMissingEvidence(ctx: RecommenderContext): MissingEvidenceItem[] {
+  const evidenceForProject = ctx.evidencePlanItems.filter((e) => e.auditProjectId === ctx.auditProjectId)
   const obtainedKeys = new Set(
-    ctx.evidencePlanItems.filter((e) => e.status === 'obtained').map((e) => `${e.clauseId}::${e.description}`)
+    evidenceForProject.filter((e) => e.status === 'obtained').map((e) => `${e.clauseId}::${e.description}`)
   )
   const requestedOrMissingKeys = new Set(
-    ctx.evidencePlanItems.filter((e) => e.status !== 'obtained').map((e) => `${e.clauseId}::${e.description}`)
+    evidenceForProject.filter((e) => e.status !== 'obtained').map((e) => `${e.clauseId}::${e.description}`)
   )
 
   const missing: MissingEvidenceItem[] = []
@@ -189,7 +220,7 @@ export function highlightMissingEvidence(ctx: RecommenderContext): MissingEviden
       const key = `${clause.id}::${ev.description}`
       if (obtainedKeys.has(key)) continue
       // Either explicitly tracked as outstanding, or never added to the evidence plan at all.
-      if (requestedOrMissingKeys.has(key) || !ctx.evidencePlanItems.some((e) => e.clauseId === clause.id)) {
+      if (requestedOrMissingKeys.has(key) || !evidenceForProject.some((e) => e.clauseId === clause.id)) {
         missing.push({
           clauseId: clause.id,
           clauseNumber: clause.clauseNumber,
@@ -203,15 +234,6 @@ export function highlightMissingEvidence(ctx: RecommenderContext): MissingEviden
   return missing
 }
 
-function missingEvidenceMap(ctx: RecommenderContext): Map<string, number> {
-  const missing = highlightMissingEvidence(ctx)
-  const map = new Map<string, number>()
-  for (const m of missing) {
-    map.set(m.clauseId, (map.get(m.clauseId) ?? 0) + 1)
-  }
-  return map
-}
-
 export interface AgendaItem {
   day: number
   startTime: string
@@ -222,10 +244,10 @@ export interface AgendaItem {
   location?: string
 }
 
-/** 6. Generate a today's-agenda view by combining programme slots with clause titles. */
+/** 6. Generate a today's-agenda view by combining this audit project's programme slots with clause titles. */
 export function generateAgenda(ctx: RecommenderContext): AgendaItem[] {
-  if (!ctx.programmeSlots) return []
-  return ctx.programmeSlots
+  const slots = (ctx.programmeSlots ?? []).filter((s) => s.auditProjectId === ctx.auditProjectId)
+  return slots
     .map((slot) => {
       const clauseTitles = slot.clauseIds
         .map((id) => ctx.scopeClauses.find((c) => c.id === id))
@@ -249,5 +271,62 @@ export function generateAgenda(ctx: RecommenderContext): AgendaItem[] {
         location: slot.location
       }
     })
-    .sort((a, b) => (a.day - b.day) || a.startTime.localeCompare(b.startTime))
+    .sort((a, b) => a.day - b.day || a.startTime.localeCompare(b.startTime))
+}
+
+export interface WeakControl {
+  controlId: string
+  description: string
+  /** Clauses this control is meant to evidence that are currently scoring below 50% (v2) despite the control existing. */
+  weakClauseIds: string[]
+}
+
+export interface ProcessClosurePerformance {
+  processId: string
+  totalActions: number
+  closureRatePct: number
+  closedOnTimePct: number
+}
+
+export interface PatternAnalysis {
+  /** Clauses/processes with repeated findings across the workspace's entire audit history, not just this audit. */
+  recurringFindings: RecurringFinding[]
+  /** Controls whose linked clauses are still scoring poorly despite the control existing on paper. */
+  weakControls: WeakControl[]
+  /** Processes with the worst corrective-action closure track record, worst first. */
+  poorClosureAreas: ProcessClosurePerformance[]
+}
+
+/** 7. Pattern/recurrence analysis across the graph — repeat findings, controls that aren't actually working, and processes with poor closure discipline. Every item here is a count or percentage computed from real records, not inferred. */
+export function analysePatterns(ctx: RecommenderContext): PatternAnalysis {
+  const scoringCtx = toScoringContext(ctx)
+
+  const recurringFindings = getRecurringFindings(ctx.auditFindings)
+
+  const weakControls: WeakControl[] = ctx.controls
+    .map((control) => ({
+      controlId: control.id,
+      description: control.description,
+      weakClauseIds: control.clauseIds.filter(
+        (id) => computeClauseScoreV2(id, ctx.auditProjectId, scoringCtx).score < 50
+      )
+    }))
+    .filter((c) => c.weakClauseIds.length > 0)
+
+  const poorClosureAreas: ProcessClosurePerformance[] = ctx.processes
+    .map((process) => {
+      const clauseIds = new Set(collectProcessClauseIds([process.id], ctx.processes, ctx.risks, ctx.controls))
+      const findingIds = new Set(
+        ctx.auditFindings
+          .filter((f) => f.processId === process.id || (f.clauseId !== undefined && clauseIds.has(f.clauseId)))
+          .map((f) => f.id)
+      )
+      const actions = ctx.correctiveActions.filter((a) => findingIds.has(a.findingId))
+      const effectiveness = computeClosureEffectiveness(actions)
+      return { processId: process.id, ...effectiveness }
+    })
+    .filter((p) => p.totalActions > 0 && p.closureRatePct < 100)
+    .sort((a, b) => a.closureRatePct - b.closureRatePct)
+
+  return { recurringFindings, weakControls, poorClosureAreas }
 }

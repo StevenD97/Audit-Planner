@@ -36,7 +36,8 @@ function buildState(ws: Workspace): WorkspaceState {
     complianceEvaluations: ws.getAll('compliance_evaluations'),
     auditFindings: ws.getAll('audit_findings'),
     rootCauseAnalyses: ws.getAll('root_cause_analyses'),
-    correctiveActions: ws.getAll('corrective_actions')
+    correctiveActions: ws.getAll('corrective_actions'),
+    samplingPlans: ws.getAll('sampling_plans')
   }
 }
 

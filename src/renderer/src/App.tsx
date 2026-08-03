@@ -8,6 +8,7 @@ import ProcessExplorerPage from './features/process-explorer/ProcessExplorerPage
 import LegalCompliancePage from './features/legal-compliance/LegalCompliancePage'
 import FindingsPage from './features/findings/FindingsPage'
 import RiskRegisterPage from './features/risk-register/RiskRegisterPage'
+import SamplingPlansPage from './features/sampling/SamplingPlansPage'
 import ProgrammeBuilderPage from './features/programme-builder/ProgrammeBuilderPage'
 import ClauseExplorerPage from './features/clause-explorer/ClauseExplorerPage'
 import ChecklistGeneratorPage from './features/checklist-generator/ChecklistGeneratorPage'
@@ -44,6 +45,7 @@ export default function App(): JSX.Element {
         <Route path="/programme" element={<ProgrammeBuilderPage />} />
         <Route path="/clauses" element={<ClauseExplorerPage />} />
         <Route path="/checklist" element={<ChecklistGeneratorPage />} />
+        <Route path="/sampling" element={<SamplingPlansPage />} />
         <Route path="/evidence" element={<EvidencePlannerPage />} />
         <Route path="/gap-assessment" element={<GapAssessmentPage />} />
         <Route path="/findings" element={<FindingsPage />} />

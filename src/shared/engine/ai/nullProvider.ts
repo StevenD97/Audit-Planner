@@ -11,5 +11,6 @@ export const nullProvider: AiProvider = {
   identifyWeakAreas: recommender.identifyWeakAreas,
   generateInterviewPlan: recommender.generateInterviewPlan,
   highlightMissingEvidence: recommender.highlightMissingEvidence,
-  generateAgenda: recommender.generateAgenda
+  generateAgenda: recommender.generateAgenda,
+  analysePatterns: recommender.analysePatterns
 }

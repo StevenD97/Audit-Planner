@@ -680,9 +680,46 @@ landed:**
   here rather than left implicit.
 - Verified: 89/89 tests pass, typecheck clean, both builds compile.
 
-**Next up: M6 (Audit Intelligence Engine upgrade, Phase 6 of the
-brief)** — extends the deterministic recommender's graph traversal
-across the new Process/Risk/Control/Legal/Findings entities (not just
-clauses), adds recurrence/pattern detection using the real findings
-history M3 built, and migrates its internal weak-area scoring from v1 to
-v2 so the whole platform is drawing on one consistent, explainable model.
+**M6 (Audit Intelligence Engine upgrade + Sampling Engine, Phases 6-7 of
+the brief) is also landed:**
+
+- **The recommender now runs on one consistent model, not two.**
+  `identifyWeakAreas` and `recommendQuestions` in `engine/recommender.ts`
+  were migrated from the old `scoring.ts` (v1) to `scoringV2.ts` — every
+  reason shown in the Audit Intelligence Engine panel is now a real
+  `ScoreDriver` label, the same ones the Readiness Assessment screen
+  shows. This closes the gap flagged explicitly in the M5 commit.
+- **Real graph traversal, not just clause lookups**: `suggestAuditTrails`
+  now also returns a **process trail** — Process → Risk → Control →
+  Clauses, built from whichever process currently has the highest
+  coverage-priority score (reusing M4's `computeCoveragePriority`) —
+  alongside the existing canonical and clause-graph trails.
+- **New `analysePatterns()` function** surfaces three things the brief
+  asked for explicitly, each backed by a real computation: recurring
+  findings (via M3's `getRecurringFindings`, scoped across the *whole*
+  workspace's audit history), weak controls (controls whose linked
+  clauses are still v2-scoring below 50% despite the control existing),
+  and poor closure-performance areas (per-process closure effectiveness,
+  worst first). Every item is a count or percentage from real records,
+  never an inference.
+- **`RecommenderContext` is now self-contained**: every function filters
+  by `auditProjectId` internally rather than trusting the caller to
+  pre-filter arrays — a real correctness improvement surfaced while
+  wiring the new fields through, not just new capability.
+- **Sampling Engine** (`src/shared/engine/sampling.ts`, 8 unit tests):
+  judgment/risk-based/random/stratified sample-size recommendations,
+  each rationale stating plainly that it's a practical heuristic
+  (percentage-of-population with sensible floors) rather than a formal
+  statistical confidence-interval calculation — honesty over false
+  rigour. Guidance text per artefact type (training records, inspections,
+  permits, contractors, incident investigations, competence records). A
+  new **Sampling Plans** screen lets a plan be generated, saved, and its
+  actually-selected items logged.
+- Verified: 100/100 tests pass, typecheck clean, both builds compile, and
+  the process-trail, pattern-analysis, and sampling-plan flows were all
+  exercised live in a browser (screenshots, zero console errors).
+
+**Next up: M7 (Maturity Model + single-workspace multi-site views,
+Phases 8-9 of the brief)** — a 5-level x 7-dimension maturity assessment
+with an improvement roadmap, plus surfacing strongest/weakest sites and
+top recurring findings using data M1-M6 already computed.

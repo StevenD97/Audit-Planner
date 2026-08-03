@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { newId } from '@shared/id'
-import { getAuditableClauses } from '@shared/knowledge-base'
+import { getAuditableClauses, getClauseById } from '@shared/knowledge-base'
 import { getActiveProvider } from '@shared/engine/ai'
 import type { RecommenderContext } from '@shared/engine/recommender'
 import { ClauseChip, useCurrentAuditProject } from '../../components/common'
@@ -8,7 +8,7 @@ import { useWorkspaceStore } from '../../store/workspaceStore'
 
 const ai = getActiveProvider()
 
-type ActionKey = 'questions' | 'trails' | 'weak' | 'interviewPlan' | 'missingEvidence' | 'agenda'
+type ActionKey = 'questions' | 'trails' | 'weak' | 'interviewPlan' | 'missingEvidence' | 'agenda' | 'patterns'
 
 const ACTIONS: { key: ActionKey; label: string }[] = [
   { key: 'questions', label: 'Recommend audit questions' },
@@ -16,7 +16,8 @@ const ACTIONS: { key: ActionKey; label: string }[] = [
   { key: 'weak', label: 'Identify likely weak areas' },
   { key: 'interviewPlan', label: 'Generate an interview plan' },
   { key: 'missingEvidence', label: 'What evidence is missing?' },
-  { key: 'agenda', label: "Generate today's agenda" }
+  { key: 'agenda', label: "Generate today's agenda" },
+  { key: 'patterns', label: 'Analyse patterns & recurrence' }
 ]
 
 export default function AiAssistantPanel({ onClose }: { onClose: () => void }): JSX.Element {
@@ -29,11 +30,19 @@ export default function AiAssistantPanel({ onClose }: { onClose: () => void }): 
   const ctx: RecommenderContext | null = useMemo(() => {
     if (!project || !workspace) return null
     return {
+      auditProjectId: project.id,
       standardIds: project.standards,
       scopeClauses: project.standards.flatMap((s) => getAuditableClauses(s)),
-      gapAssessments: workspace.gapAssessments.filter((g) => g.auditProjectId === project.id),
-      evidencePlanItems: workspace.evidencePlanItems.filter((e) => e.auditProjectId === project.id),
-      programmeSlots: workspace.programmeSlots.filter((s) => s.auditProjectId === project.id)
+      gapAssessments: workspace.gapAssessments,
+      evidencePlanItems: workspace.evidencePlanItems,
+      auditFindings: workspace.auditFindings,
+      correctiveActions: workspace.correctiveActions,
+      complianceObligations: workspace.complianceObligations,
+      complianceEvaluations: workspace.complianceEvaluations,
+      risks: workspace.risks,
+      controls: workspace.controls,
+      processes: workspace.processes,
+      programmeSlots: workspace.programmeSlots
     }
   }, [project, workspace])
 
@@ -73,6 +82,7 @@ export default function AiAssistantPanel({ onClose }: { onClose: () => void }): 
               <MissingEvidenceView ctx={ctx} onInsert={bulkUpsertEvidenceItems} auditProjectId={project!.id} />
             )}
             {active === 'agenda' && <AgendaView ctx={ctx} />}
+            {active === 'patterns' && <PatternsView ctx={ctx} />}
             {!active && <p className="text-slate-400">Pick an action above.</p>}
           </div>
         </>
@@ -125,7 +135,7 @@ function QuestionsView({
 }
 
 function TrailsView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
-  const { canonical, customSeedClause, customTrail } = ai.suggestAuditTrails(ctx)
+  const { canonical, customSeedClause, customTrail, processTrail } = ai.suggestAuditTrails(ctx)
   return (
     <div className="space-y-3">
       {canonical.map((t) => (
@@ -134,6 +144,29 @@ function TrailsView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
           <p className="text-xs text-slate-500">{t.description}</p>
         </div>
       ))}
+      {processTrail && (
+        <div className="rounded-lg border border-brand-200 bg-brand-50 p-2 dark:border-brand-800 dark:bg-brand-900/20">
+          <p className="font-medium">Process trail: {processTrail.process.name} (highest coverage priority)</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {processTrail.risks.length} risk(s) → {processTrail.controls.length} control(s) →{' '}
+            {processTrail.clauseIds.length} clause(s)
+          </p>
+          <ol className="mt-1 list-decimal space-y-1 pl-4 text-xs">
+            {processTrail.risks.map((risk) => (
+              <li key={risk.id}>
+                {risk.description}
+                <ul className="list-disc pl-4">
+                  {processTrail.controls
+                    .filter((c) => c.riskId === risk.id)
+                    .map((control) => (
+                      <li key={control.id}>{control.description}</li>
+                    ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
       {customSeedClause && customTrail && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20">
           <p className="font-medium">Custom trail from weakest clause: {customSeedClause.title}</p>
@@ -224,6 +257,62 @@ function MissingEvidenceView({
         ))}
         {missing.length === 0 && <p className="text-slate-400">No missing evidence detected.</p>}
       </ul>
+    </div>
+  )
+}
+
+function PatternsView({ ctx }: { ctx: RecommenderContext }): JSX.Element {
+  const { recurringFindings, weakControls, poorClosureAreas } = ai.analysePatterns(ctx)
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="mb-1 font-medium">Recurring findings (across all audits)</p>
+        {recurringFindings.length === 0 ? (
+          <p className="text-xs text-slate-400">Nothing has recurred yet.</p>
+        ) : (
+          <ul className="space-y-1">
+            {recurringFindings.map((r) => {
+              const clause = r.kind === 'clause' ? getClauseById(r.id) : undefined
+              const process = r.kind === 'process' ? ctx.processes.find((p) => p.id === r.id) : undefined
+              const label = clause ? `§${clause.clauseNumber} ${clause.title}` : (process?.name ?? r.id)
+              return (
+                <li key={`${r.kind}:${r.id}`} className="rounded-lg border border-slate-100 p-2 text-xs dark:border-slate-700">
+                  {label} — {r.count} findings
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
+      <div>
+        <p className="mb-1 font-medium">Weak controls</p>
+        {weakControls.length === 0 ? (
+          <p className="text-xs text-slate-400">No control currently has a poorly-scoring linked clause.</p>
+        ) : (
+          <ul className="space-y-1">
+            {weakControls.map((c) => (
+              <li key={c.controlId} className="rounded-lg border border-slate-100 p-2 text-xs dark:border-slate-700">
+                {c.description} — {c.weakClauseIds.length} linked clause(s) scoring below 50%
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div>
+        <p className="mb-1 font-medium">Poor closure performance</p>
+        {poorClosureAreas.length === 0 ? (
+          <p className="text-xs text-slate-400">No process has an incomplete closure record.</p>
+        ) : (
+          <ul className="space-y-1">
+            {poorClosureAreas.map((p) => (
+              <li key={p.processId} className="rounded-lg border border-slate-100 p-2 text-xs dark:border-slate-700">
+                {ctx.processes.find((proc) => proc.id === p.processId)?.name ?? p.processId} — {p.closureRatePct}% closed,{' '}
+                {p.closedOnTimePct}% of those on time
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }

@@ -181,4 +181,13 @@ CREATE TABLE IF NOT EXISTS corrective_actions (
   data TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_corrective_actions_finding ON corrective_actions(finding_id);
+
+-- Audit sampling plans (additive; see
+-- docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md's Phase 7 notes).
+CREATE TABLE IF NOT EXISTS sampling_plans (
+  id TEXT PRIMARY KEY,
+  audit_project_id TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sampling_plans_project ON sampling_plans(audit_project_id);
 `

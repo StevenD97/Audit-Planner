@@ -401,3 +401,26 @@ export interface CorrectiveAction {
   verificationNotes?: string
   closedAt?: string
 }
+
+// ---- Audit sampling (Phase 7 of docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md) ----
+
+export type SamplingMethodType = 'judgment' | 'risk_based' | 'random' | 'stratified'
+export type SamplingArtefactTypeValue =
+  | 'training_records'
+  | 'inspections'
+  | 'permits'
+  | 'contractors'
+  | 'incident_investigations'
+  | 'competence_records'
+
+export interface SamplingPlan {
+  id: string
+  auditProjectId: string
+  artefactType: SamplingArtefactTypeValue
+  method: SamplingMethodType
+  populationSize: number
+  sampleSize: number
+  rationale: string
+  /** Free-text identifiers of the actual items selected (e.g. record IDs, employee names) — logged as the audit works through the sample. */
+  selectedItems: string[]
+}

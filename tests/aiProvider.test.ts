@@ -16,5 +16,6 @@ describe('AI provider seam', () => {
     expect(nullProvider.generateInterviewPlan).toBe(recommender.generateInterviewPlan)
     expect(nullProvider.highlightMissingEvidence).toBe(recommender.highlightMissingEvidence)
     expect(nullProvider.generateAgenda).toBe(recommender.generateAgenda)
+    expect(nullProvider.analysePatterns).toBe(recommender.analysePatterns)
   })
 })

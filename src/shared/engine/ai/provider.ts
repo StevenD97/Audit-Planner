@@ -4,7 +4,8 @@ import type {
   identifyWeakAreas,
   generateInterviewPlan,
   highlightMissingEvidence,
-  generateAgenda
+  generateAgenda,
+  analysePatterns
 } from '../recommender'
 
 /**
@@ -26,4 +27,5 @@ export interface AiProvider {
   generateInterviewPlan: typeof generateInterviewPlan
   highlightMissingEvidence: typeof highlightMissingEvidence
   generateAgenda: typeof generateAgenda
+  analysePatterns: typeof analysePatterns
 }

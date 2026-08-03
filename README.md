@@ -155,6 +155,12 @@ this does and doesn't protect against**. Two things worth knowing up front:
    knowledge base. Any clause rated Minor/Major NC in the Gap Assessment
    Tool can be **raised as a finding** with one click, pre-filled from
    the assessment narrative.
+   **Sampling Plans** recommends a sample size and states its rationale
+   plainly — judgment/risk-based/random/stratified, each explicitly
+   labelled as a practical heuristic rather than a formal statistical
+   calculation — for training records, inspections, permits, contractors,
+   incident investigations and competence records, and logs which items
+   were actually sampled.
    **Readiness Assessment** scores every clause from six real inputs
    (gap rating, open findings, corrective-action closure history,
    compliance evaluations, evidence completeness, linked risk level),
@@ -177,9 +183,18 @@ this does and doesn't protect against**. Two things worth knowing up front:
 12. **Audit Intelligence Engine** (🤖 button, bottom of sidebar) — a
     deterministic, fully-offline recommender (no external API calls) that
     suggests questions, trails, weak areas, interview plans, missing
-    evidence and agendas from the current audit's actual data, behind a
-    provider seam (`src/shared/engine/ai/`) designed so a future local LLM
-    (e.g. Ollama) can be swapped in without touching UI code. See
+    evidence and agendas from the current audit's actual data — every
+    reason shown is the same explainable `ScoreDriver` the Readiness
+    Assessment screen uses, not a separate heuristic. Trail suggestions
+    include a **process trail** (Process → Risk → Control → Clauses) from
+    whichever process currently has the highest risk/findings/compliance
+    coverage priority, alongside the canonical and clause-graph trails.
+    **Analyse patterns & recurrence** surfaces recurring findings across
+    your entire audit history, controls whose linked clauses are still
+    scoring poorly despite existing, and processes with the worst
+    corrective-action closure record. Runs behind a provider seam
+    (`src/shared/engine/ai/`) designed so a future local LLM (e.g. Ollama)
+    can be swapped in without touching UI code. See
     `docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md` for the full platform
     roadmap and `docs/ARCHITECTURE.md` §6 for why it's rule-based rather
     than LLM-backed today.
