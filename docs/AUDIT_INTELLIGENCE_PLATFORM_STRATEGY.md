@@ -719,7 +719,53 @@ the brief) is also landed:**
   the process-trail, pattern-analysis, and sampling-plan flows were all
   exercised live in a browser (screenshots, zero console errors).
 
-**Next up: M7 (Maturity Model + single-workspace multi-site views,
-Phases 8-9 of the brief)** — a 5-level x 7-dimension maturity assessment
-with an improvement roadmap, plus surfacing strongest/weakest sites and
-top recurring findings using data M1-M6 already computed.
+**M7 (Maturity Model + single-workspace multi-site views, Phases 8-9 of
+the brief) is also landed:**
+
+- **`MaturityAssessment` → `MaturityDimensionScore` entities** (same
+  additive schema convention), covering the 7 dimensions specified in the
+  brief (Leadership, Planning, Risk Management, Competence, Operational
+  Control, Performance Evaluation, Improvement) at 5 levels each
+  (Initial → Reactive → Defined → Proactive → Optimised).
+- **A real improvement roadmap, not a generic checklist**:
+  `engine/maturity.ts` carries genuine, written guidance for all 28
+  level-transitions (7 dimensions × 4 climbs), sorted so the dimension
+  with the most room to grow always leads — verified with a test that
+  checks every one of the 28 transitions actually has real, distinct
+  guidance text, not a placeholder.
+- **Maturity Assessment screen** (`src/renderer/src/features/maturity/`):
+  click-to-rate each dimension 1-5, a spider/radar chart (hand-built SVG,
+  matching the existing heat-map/sparkline convention rather than adding
+  a charting dependency), and the roadmap itself.
+- **Site benchmarking, stated at the resolution the data actually
+  supports**: the Readiness Assessment screen's existing "by site"
+  section now labels the strongest/weakest site *within the currently
+  viewed audit's scope* — deliberately not oversold as enterprise-wide
+  benchmarking, since that would need cross-audit-project aggregation
+  this build doesn't do. What genuinely *is* cross-audit and shown
+  alongside it: **"Top recurring findings across all audits in this
+  workspace"**, reusing M3's `getRecurringFindings` over the whole
+  workspace's finding history.
+- Verified: 107/107 tests pass, typecheck clean, both builds compile,
+  and the maturity rating → spider chart → roadmap flow was exercised
+  live in a browser (screenshot, zero console errors, math checked by
+  hand: 1.1/5 overall from six dimensions defaulting to level 1 plus one
+  rated level 2).
+
+**M8 (Site & Corporate Audits — the cross-workspace/multi-user parts of
+Phase 8) remains explicitly gated, not built:**
+
+§0 of this document flagged that true cross-site benchmarking, a shared
+legal register with multiple named owners, and real multi-user access
+all require a backend this project does not have — and asked which path
+to take before any of M1-M7 began. The answer was **single-workspace
+scope**, which is exactly what M1-M7 delivered: everything above works
+fully within one workspace/one browser, including a genuine (if
+scope-limited) site comparison and truly cross-audit recurring-findings
+detection. What M8 would add — multiple people, in different browsers,
+seeing the same live data — needs a server and a database, which is a
+different, larger project than "one more milestone," not something to
+quietly fake with client-side tricks. If that constraint has changed
+(e.g. IT posture allows a backend now), say so explicitly and this
+becomes the next real milestone; until then, this is where the platform
+build stops by design, not by oversight.

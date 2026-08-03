@@ -9,6 +9,7 @@ import LegalCompliancePage from './features/legal-compliance/LegalCompliancePage
 import FindingsPage from './features/findings/FindingsPage'
 import RiskRegisterPage from './features/risk-register/RiskRegisterPage'
 import SamplingPlansPage from './features/sampling/SamplingPlansPage'
+import MaturityPage from './features/maturity/MaturityPage'
 import ProgrammeBuilderPage from './features/programme-builder/ProgrammeBuilderPage'
 import ClauseExplorerPage from './features/clause-explorer/ClauseExplorerPage'
 import ChecklistGeneratorPage from './features/checklist-generator/ChecklistGeneratorPage'
@@ -51,6 +52,7 @@ export default function App(): JSX.Element {
         <Route path="/findings" element={<FindingsPage />} />
         <Route path="/risk-register" element={<RiskRegisterPage />} />
         <Route path="/readiness" element={<ReadinessPage />} />
+        <Route path="/maturity" element={<MaturityPage />} />
         <Route path="/trails" element={<AuditTrailsPage />} />
         <Route path="/reporting" element={<ReportingPage />} />
       </Routes>

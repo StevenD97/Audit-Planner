@@ -424,3 +424,31 @@ export interface SamplingPlan {
   /** Free-text identifiers of the actual items selected (e.g. record IDs, employee names) — logged as the audit works through the sample. */
   selectedItems: string[]
 }
+
+// ---- Management system maturity model (Phase 9 of
+// docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md) ----
+
+export type MaturityDimension =
+  | 'leadership'
+  | 'planning'
+  | 'risk_management'
+  | 'competence'
+  | 'operational_control'
+  | 'performance_evaluation'
+  | 'improvement'
+
+export type MaturityLevel = 1 | 2 | 3 | 4 | 5
+
+export interface MaturityAssessment {
+  id: string
+  auditProjectId: string
+  takenAt: string
+}
+
+export interface MaturityDimensionScore {
+  id: string
+  assessmentId: string
+  dimension: MaturityDimension
+  level: MaturityLevel
+  narrative?: string
+}

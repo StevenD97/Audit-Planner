@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/findings', label: 'Findings & Actions', icon: '🚩' },
   { to: '/risk-register', label: 'Risk Register', icon: '🔥' },
   { to: '/readiness', label: 'Readiness', icon: '🎯' },
+  { to: '/maturity', label: 'Maturity', icon: '🕸️' },
   { to: '/trails', label: 'Audit Trails', icon: '🔗' },
   { to: '/reporting', label: 'Reporting', icon: '🖨️' }
 ]

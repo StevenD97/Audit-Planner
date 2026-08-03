@@ -9,6 +9,7 @@ import {
   type ScoringV2Context,
   type ScoredEntity
 } from '@shared/engine/scoringV2'
+import { getRecurringFindings } from '@shared/engine/findings'
 import { AuditProjectPicker, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 
@@ -16,12 +17,13 @@ function scoreBarColor(score: number): string {
   return score >= 80 ? 'bg-status-conforms' : score >= 40 ? 'bg-status-ofi' : 'bg-status-major'
 }
 
-function ScoreRow({ label, entity }: { label: string; entity: ScoredEntity }): JSX.Element {
+function ScoreRow({ label, entity, badge }: { label: string; entity: ScoredEntity; badge?: string }): JSX.Element {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-3">
         <span className="w-48 shrink-0 truncate text-xs" title={label}>
           {label}
+          {badge && <span className="ml-1 chip bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">{badge}</span>}
         </span>
         <div className="h-3 flex-1 rounded-full bg-slate-100 dark:bg-slate-700">
           <div className={`h-3 rounded-full ${scoreBarColor(entity.score)}`} style={{ width: `${entity.score}%` }} />
@@ -92,6 +94,8 @@ export default function ReadinessPage(): JSX.Element {
     .filter((e) => (e.children?.length ?? 0) > 0)
     .sort((a, b) => a.score - b.score)
 
+  const recurringFindings = getRecurringFindings(workspace.auditFindings)
+
   async function takeSnapshot(): Promise<void> {
     await addReadinessSnapshot({
       id: newId(),
@@ -135,9 +139,38 @@ export default function ReadinessPage(): JSX.Element {
       {bySite.length > 0 && (
         <div className="card space-y-2">
           <h2 className="mb-1 text-lg font-semibold">Readiness by site</h2>
-          {bySite.map((s) => (
-            <ScoreRow key={s.id} label={siteNameFor(s.id)} entity={s} />
+          {bySite.length > 1 && (
+            <p className="mb-2 text-xs text-slate-400">
+              Compared within this audit&apos;s scope — {siteNameFor(bySite[bySite.length - 1].id)} is currently
+              strongest, {siteNameFor(bySite[0].id)} weakest.
+            </p>
+          )}
+          {bySite.map((s, i) => (
+            <ScoreRow
+              key={s.id}
+              label={siteNameFor(s.id)}
+              entity={s}
+              badge={bySite.length > 1 ? (i === 0 ? 'Weakest' : i === bySite.length - 1 ? 'Strongest' : undefined) : undefined}
+            />
           ))}
+        </div>
+      )}
+
+      {recurringFindings.length > 0 && (
+        <div className="card space-y-2">
+          <h2 className="mb-1 text-lg font-semibold">Top recurring findings (across all audits in this workspace)</h2>
+          {recurringFindings.slice(0, 10).map((r) => {
+            const label =
+              r.kind === 'clause'
+                ? clauseTitleFor(r.id)
+                : processNameFor(r.id)
+            return (
+              <div key={`${r.kind}:${r.id}`} className="flex items-center justify-between text-sm">
+                <span>{label}</span>
+                <span className="chip bg-status-major/10 text-status-major">{r.count} findings</span>
+              </div>
+            )
+          })}
         </div>
       )}
 

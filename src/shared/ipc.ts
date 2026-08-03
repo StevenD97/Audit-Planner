@@ -21,7 +21,9 @@ import type {
   AuditFinding,
   RootCauseAnalysis,
   CorrectiveAction,
-  SamplingPlan
+  SamplingPlan,
+  MaturityAssessment,
+  MaturityDimensionScore
 } from './types'
 import type { ExportDocument } from './export'
 import type { EntityTable } from './workspaceEntities'
@@ -53,6 +55,8 @@ export interface WorkspaceState {
   rootCauseAnalyses: RootCauseAnalysis[]
   correctiveActions: CorrectiveAction[]
   samplingPlans: SamplingPlan[]
+  maturityAssessments: MaturityAssessment[]
+  maturityDimensionScores: MaturityDimensionScore[]
 }
 
 export interface OpenResult {
