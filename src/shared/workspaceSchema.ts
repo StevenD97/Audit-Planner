@@ -206,4 +206,13 @@ CREATE TABLE IF NOT EXISTS maturity_dimension_scores (
   data TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_maturity_dimension_scores_assessment ON maturity_dimension_scores(assessment_id);
+
+-- Manually-created calendar entries. Audit dates and Programme Builder slots
+-- are NOT duplicated here — they're derived at read time (engine/calendar.ts).
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON calendar_events(date);
 `

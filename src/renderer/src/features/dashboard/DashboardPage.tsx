@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { getAuditableClauses } from '@shared/knowledge-base'
 import { computeReadiness } from '@shared/engine/scoring'
+import { buildAuditDerivedEvents, getUpcomingEvents, mergeCalendarEvents, toIsoDate } from '@shared/engine/calendar'
 import type { AuditProject, AuditProjectStatus, GapAssessment } from '@shared/types'
 
 const STATUS_COLUMNS: { key: AuditProjectStatus; label: string }[] = [
@@ -34,6 +35,12 @@ export default function DashboardPage(): JSX.Element {
 
   const mostImminent = upcoming[0]
   const imminentReadiness = mostImminent ? readinessFor(mostImminent, gapAssessments) : null
+
+  const upcomingEvents = getUpcomingEvents(
+    mergeCalendarEvents(workspace?.calendarEvents ?? [], buildAuditDerivedEvents(projects, workspace?.programmeSlots ?? [])),
+    toIsoDate(new Date()),
+    5
+  )
 
   async function startAuditPlan(): Promise<void> {
     const project = await createAuditProject({ name: 'Untitled Audit' })
@@ -126,6 +133,36 @@ export default function DashboardPage(): JSX.Element {
             )
           })}
         </div>
+      </div>
+
+      <div className="card">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Upcoming events</h2>
+          <Link to="/calendar" className="text-sm text-brand-600 hover:underline dark:text-brand-400">
+            Open calendar →
+          </Link>
+        </div>
+        {upcomingEvents.length === 0 ? (
+          <p className="text-sm text-slate-500">Nothing on the calendar yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {upcomingEvents.map((e) => (
+              <Link
+                key={e.id}
+                to={`/calendar?date=${e.date}`}
+                className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 text-xs text-slate-500">
+                    {new Date(`${e.date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </span>
+                  <span>{e.title}</span>
+                </span>
+                {!e.allDay && <span className="text-xs text-slate-400">{e.startTime}</span>}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

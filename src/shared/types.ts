@@ -452,3 +452,22 @@ export interface MaturityDimensionScore {
   level: MaturityLevel
   narrative?: string
 }
+
+// ---- Calendar ----
+
+export type CalendarEventCategory = 'meeting' | 'deadline' | 'reminder' | 'other'
+
+/** A manually-created calendar entry. Audit dates and Programme Builder slots
+ * appear on the calendar too, but as a derived view (see engine/calendar.ts) —
+ * not duplicated into this table, so there's one source of truth for each. */
+export interface CalendarEvent {
+  id: string
+  title: string
+  description?: string
+  date: string // 'YYYY-MM-DD'
+  allDay: boolean
+  startTime?: string // 'HH:MM', when !allDay
+  endTime?: string
+  category: CalendarEventCategory
+  auditProjectId?: string
+}

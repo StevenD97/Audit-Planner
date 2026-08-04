@@ -23,7 +23,8 @@ import type {
   CorrectiveAction,
   SamplingPlan,
   MaturityAssessment,
-  MaturityDimensionScore
+  MaturityDimensionScore,
+  CalendarEvent
 } from './types'
 import type { ExportDocument } from './export'
 import type { EntityTable } from './workspaceEntities'
@@ -57,6 +58,7 @@ export interface WorkspaceState {
   samplingPlans: SamplingPlan[]
   maturityAssessments: MaturityAssessment[]
   maturityDimensionScores: MaturityDimensionScore[]
+  calendarEvents: CalendarEvent[]
 }
 
 export interface OpenResult {

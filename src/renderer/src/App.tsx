@@ -4,6 +4,7 @@ import Layout from './app/Layout'
 import { useWorkspaceStore } from './store/workspaceStore'
 import DashboardPage from './features/dashboard/DashboardPage'
 import AuditWizardPage from './features/audit-wizard/AuditWizardPage'
+import CalendarPage from './features/calendar/CalendarPage'
 import ProcessExplorerPage from './features/process-explorer/ProcessExplorerPage'
 import LegalCompliancePage from './features/legal-compliance/LegalCompliancePage'
 import FindingsPage from './features/findings/FindingsPage'
@@ -40,6 +41,7 @@ export default function App(): JSX.Element {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/wizard" element={<AuditWizardPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/processes" element={<ProcessExplorerPage />} />
         <Route path="/legal" element={<LegalCompliancePage />} />
         <Route path="/programme" element={<ProgrammeBuilderPage />} />

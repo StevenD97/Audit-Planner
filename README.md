@@ -145,7 +145,21 @@ this does and doesn't protect against**. Two things worth knowing up front:
    everything you entered — no separate report-writing pass. This
    replaced the old standalone Audit Planner and Gap Assessment Tool
    screens; the sidebar was condensed accordingly (16 items → 11).
-3. **Process Explorer** — model your organisation as Organisation → Site →
+3. **Calendar** — a month view (Monday-start grid, prev/next/Today nav,
+   click a day for its full agenda) for scheduling. Audit dates and
+   Programme Builder's day-by-day schedule appear automatically — as soon
+   as an audit has a start date it shows a placeholder entry, and once
+   Programme Builder generates the detailed schedule that replaces it with
+   one event per slot, computed from the audit's start date plus each
+   slot's day number. Those are a read-only derived view, not a separate
+   copy of the data, so there's one source of truth for an audit's dates
+   (edit them in the Wizard/Programme Builder, not the calendar). You can
+   also add/edit/delete your own events (meetings, reminders, deadlines),
+   optionally linked to an audit. The Dashboard's **Upcoming events** card
+   shows the next few, of either kind. This is a simplified month/agenda
+   view, not a full Outlook-style hourly day/week grid — see
+   `docs/ARCHITECTURE.md` if that's ever worth revisiting.
+4. **Process Explorer** — model your organisation as Organisation → Site →
    Department → Function → Process, each process with its own inputs/
    activities/outputs/KPIs, risks (with likelihood/severity) and controls,
    each linkable to the ISO clauses it evidences. Adopt any of 10 seeded
@@ -153,34 +167,34 @@ this does and doesn't protect against**. Two things worth knowing up front:
    Management, Contractor Management, Emergency Preparedness, Training &
    Competence, Management Review, Legal & Compliance Obligations, Change
    Management, Monitoring & Measurement) instead of starting from scratch.
-4. **Legal & Compliance** — register legislation (environmental, H&S,
+5. **Legal & Compliance** — register legislation (environmental, H&S,
    permit conditions, corporate requirements), track compliance
    obligations with requirements/responsible person/review frequency,
    link obligations to the ISO clauses they affect, and record compliance
    evaluations (Compliant/Non-compliant/Partial) over time. Overdue
    reviews and a compliance-rate summary surface at the top of the
    screen.
-5. **Risk Register** — every risk recorded against a process, plotted on
+6. **Risk Register** — every risk recorded against a process, plotted on
    a likelihood x severity heat map (click a cell to see what's in it),
    plus a coverage-priority ranking of processes driven by their risk
    level, findings raised against them, and non-compliant obligations
    linked to their clauses — with the reasoning behind each ranking shown,
    not just a number.
-6. **Programme Builder** — auto-generate a day-by-day schedule from the
+7. **Programme Builder** — auto-generate a day-by-day schedule from the
    audit's in-scope clauses; optionally select processes and/or legal
    obligations in scope to widen the schedule to whatever those actually
    link to, planning by process or compliance obligation rather than only
    by clause. A **"Prioritise by risk"** toggle reorders the schedule so
    higher-priority processes (per the Risk Register) are covered earlier
    and in more depth. Adjust activity types/owners/locations afterward.
-7. **Clause Explorer** — browse every clause with its requirement,
+8. **Clause Explorer** — browse every clause with its requirement,
    explanation, audit intent, evidence required, interview questions,
    typical findings, related/cross-standard clauses, and — via the
    **Legal** tab — every compliance obligation linked to that clause,
    with a direct link back into Legal & Compliance. Not in the sidebar
    (the Audit Wizard covers this content per-clause during the
    walkthrough) but reachable any time via global search: `Ctrl/Cmd+K`.
-8. **Checklist Generator** / **Evidence Planner** — bulk, filterable views
+9. **Checklist Generator** / **Evidence Planner** — bulk, filterable views
    over the same checklist/evidence data the Audit Wizard creates per
    clause as you walk through it; useful for cross-clause filtering by
    risk/process or reviewing everything outstanding at a glance. Not in
@@ -202,27 +216,27 @@ this does and doesn't protect against**. Two things worth knowing up front:
    `docs/AUDIT_INTELLIGENCE_PLATFORM_STRATEGY.md` for why that's
    deliberately out of scope for now) and a rollup of the top recurring
    findings across your entire audit history.
-9. **Maturity Assessment** — rate your management system 1 (Initial) to
+10. **Maturity Assessment** — rate your management system 1 (Initial) to
    5 (Optimised) across 7 dimensions (leadership, planning, risk
    management, competence, operational control, performance evaluation,
    improvement), see the result on a spider chart, and get a
    biggest-opportunity-first improvement roadmap with hand-authored
    guidance for every level transition.
-10. **Findings & Corrective Actions** — track findings (Observation / OFI
+11. **Findings & Corrective Actions** — track findings (Observation / OFI
    / Minor NC / Major NC) to closure: run a root cause analysis (5 Why,
    Fishbone, or a simplified TapRooT-style method), log corrective
    actions with an owner/due date/verification notes, and see open
    findings, overdue actions, closure rate, and **recurring findings
    across your entire audit history** (the same clause or process
    showing up repeatedly across different audits) at a glance.
-11. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
+12. **Audit Trail Generator** — canonical trails (Leadership→Objectives→
     Monitoring→Management Review; Hazard ID→Risk Assessment→Controls→
     Training→Incident Investigation; Environmental Aspects→Controls→
     Monitoring→Compliance Obligations; plus four more) can be added
     straight into the programme.
-12. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or
+13. **Reporting** — export an Audit Plan, Schedule, Preparation Pack, or
     Gap Assessment Report to Excel or PDF.
-13. **Audit Intelligence Engine** (button at the bottom of the sidebar) — a
+14. **Audit Intelligence Engine** (button at the bottom of the sidebar) — a
     deterministic, fully-offline recommender (no external API calls) that
     suggests questions, trails, weak areas, interview plans, missing
     evidence and agendas from the current audit's actual data — every
