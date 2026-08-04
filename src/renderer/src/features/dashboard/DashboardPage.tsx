@@ -21,6 +21,7 @@ function readinessFor(project: AuditProject, gapAssessments: GapAssessment[]) {
 export default function DashboardPage(): JSX.Element {
   const workspace = useWorkspaceStore((s) => s.workspace)
   const createAuditProject = useWorkspaceStore((s) => s.createAuditProject)
+  const deleteAuditProject = useWorkspaceStore((s) => s.deleteAuditProject)
   const navigate = useNavigate()
 
   const projects = workspace?.auditProjects ?? []
@@ -28,10 +29,8 @@ export default function DashboardPage(): JSX.Element {
   const checklistItems = workspace?.checklistItems ?? []
   const evidenceItems = workspace?.evidencePlanItems ?? []
 
-  const upcoming = [...projects]
-    .filter((p) => p.status !== 'closed')
-    .sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'))
-    .slice(0, 3)
+  const allAudits = [...projects].sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'))
+  const upcoming = allAudits.filter((p) => p.status !== 'closed')
 
   const mostImminent = upcoming[0]
   const imminentReadiness = mostImminent ? readinessFor(mostImminent, gapAssessments) : null
@@ -39,6 +38,13 @@ export default function DashboardPage(): JSX.Element {
   async function startAuditPlan(): Promise<void> {
     const project = await createAuditProject({ name: 'Untitled Audit' })
     navigate(`/wizard?project=${project.id}&step=context`)
+  }
+
+  async function deleteAudit(project: AuditProject): Promise<void> {
+    const confirmed = window.confirm(
+      `Delete "${project.name}"? This permanently removes its findings, evidence, gap assessments, checklist items, and readiness snapshots. This can't be undone.`
+    )
+    if (confirmed) await deleteAuditProject(project.id)
   }
 
   return (
@@ -57,17 +63,22 @@ export default function DashboardPage(): JSX.Element {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="card lg:col-span-2">
-          <h2 className="mb-3 text-lg font-semibold">Upcoming audits</h2>
-          {upcoming.length === 0 ? (
-            <p className="text-sm text-slate-500">No upcoming audits. Click &quot;Start Audit Plan&quot; above to begin.</p>
+          <h2 className="mb-3 text-lg font-semibold">Your audits</h2>
+          {allAudits.length === 0 ? (
+            <p className="text-sm text-slate-500">No audits yet. Click &quot;Start Audit Plan&quot; above to begin.</p>
           ) : (
             <div className="space-y-3">
-              {upcoming.map((p) => {
+              {allAudits.map((p) => {
                 const r = readinessFor(p, gapAssessments)
                 return (
                   <div key={p.id} className="flex items-center justify-between rounded-xl border border-slate-100 p-3 dark:border-slate-700">
                     <div>
-                      <p className="font-medium">{p.name}</p>
+                      <p className="font-medium">
+                        {p.name}
+                        {p.status === 'closed' && (
+                          <span className="chip ml-2 bg-status-pending/10 text-status-pending">Closed</span>
+                        )}
+                      </p>
                       <p className="text-xs text-slate-500">
                         {p.standards.join(' + ')} · {p.sites.map((s) => s.name).join(', ') || 'No sites set'} ·{' '}
                         {p.startDate ?? 'No date set'}
@@ -78,6 +89,9 @@ export default function DashboardPage(): JSX.Element {
                       <Link to={`/programme?project=${p.id}`} className="btn-secondary">
                         Open
                       </Link>
+                      <button className="btn-ghost text-status-major hover:bg-status-major/10" onClick={() => deleteAudit(p)}>
+                        Delete
+                      </button>
                     </div>
                   </div>
                 )

@@ -39,6 +39,7 @@ interface Store {
 
   createAuditProject(partial: Partial<AuditProject>): Promise<AuditProject>
   updateAuditProject(id: string, patch: Partial<AuditProject>): Promise<void>
+  deleteAuditProject(id: string): Promise<void>
 
   replaceProgrammeSlots(auditProjectId: string, slots: ProgrammeSlot[]): Promise<void>
   upsertProgrammeSlot(slot: ProgrammeSlot): Promise<void>
@@ -211,6 +212,49 @@ export const useWorkspaceStore = create<Store>((set, get) => ({
     if (!existing) return
     const updated: AuditProject = { ...existing, ...patch, updatedAt: nowIso() }
     await getPlatformApi().entityUpsert('audit_projects', id, { status: updated.status, updatedAt: updated.updatedAt }, updated)
+    await get().refresh()
+  },
+
+  async deleteAuditProject(id) {
+    const ws = get().workspace
+    if (!ws) return
+
+    // Two-level cascades: findings/maturity assessments own child rows keyed
+    // by their own id, not audit_project_id, so those have to be resolved first.
+    const findingIds = ws.auditFindings.filter((f) => f.auditProjectId === id).map((f) => f.id)
+    const assessmentIds = ws.maturityAssessments.filter((a) => a.auditProjectId === id).map((a) => a.id)
+
+    for (const findingId of findingIds) {
+      for (const row of ws.rootCauseAnalyses.filter((r) => r.findingId === findingId)) {
+        await getPlatformApi().entityRemove('root_cause_analyses', row.id)
+      }
+      for (const row of ws.correctiveActions.filter((c) => c.findingId === findingId)) {
+        await getPlatformApi().entityRemove('corrective_actions', row.id)
+      }
+    }
+    for (const assessmentId of assessmentIds) {
+      for (const row of ws.maturityDimensionScores.filter((s) => s.assessmentId === assessmentId)) {
+        await getPlatformApi().entityRemove('maturity_dimension_scores', row.id)
+      }
+    }
+
+    const directTables: { table: EntityTable; rows: { id: string }[] }[] = [
+      { table: 'programme_slots', rows: ws.programmeSlots.filter((r) => r.auditProjectId === id) },
+      { table: 'checklist_items', rows: ws.checklistItems.filter((r) => r.auditProjectId === id) },
+      { table: 'evidence_plan_items', rows: ws.evidencePlanItems.filter((r) => r.auditProjectId === id) },
+      { table: 'gap_assessments', rows: ws.gapAssessments.filter((r) => r.auditProjectId === id) },
+      { table: 'readiness_snapshots', rows: ws.readinessSnapshots.filter((r) => r.auditProjectId === id) },
+      { table: 'reports', rows: ws.reports.filter((r) => r.auditProjectId === id) },
+      { table: 'sampling_plans', rows: ws.samplingPlans.filter((r) => r.auditProjectId === id) },
+      { table: 'audit_findings', rows: ws.auditFindings.filter((r) => r.auditProjectId === id) },
+      { table: 'maturity_assessments', rows: ws.maturityAssessments.filter((r) => r.auditProjectId === id) }
+    ]
+    for (const { table, rows } of directTables) {
+      for (const row of rows) await getPlatformApi().entityRemove(table, row.id)
+    }
+
+    await getPlatformApi().entityRemove('audit_projects', id)
+    if (get().currentAuditProjectId === id) set({ currentAuditProjectId: null })
     await get().refresh()
   },
 
