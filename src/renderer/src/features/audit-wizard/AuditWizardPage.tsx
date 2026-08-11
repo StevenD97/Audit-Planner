@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { newId } from '@shared/id'
 import { getAuditableClauses } from '@shared/knowledge-base'
+import { getEvidenceGuidance } from '@shared/knowledge-base/evidenceGuidance'
 import { computeOverallReadinessV2, type ScoringV2Context } from '@shared/engine/scoringV2'
 import { riskWeightToLevel } from '@shared/engine/scoring'
 import type {
@@ -17,7 +18,7 @@ import type {
   Site,
   StandardId
 } from '@shared/types'
-import { RatingBadge } from '../../components/common'
+import { HelpTooltip, RatingBadge } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 
 const STANDARD_OPTIONS: { id: StandardId; label: string; description: string }[] = [
@@ -562,11 +563,13 @@ function ClauseStep({
             <div className="space-y-3">
               {clause.interviewQuestions.map((q, i) => {
                 const item = clauseChecklist.find((c) => c.question === q.question)
+                const guidance = getEvidenceGuidance(clause.id, i)
                 return (
                   <div key={i} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-700/50">
                     <p className="text-sm">
                       <span className="chip mr-2 bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">{q.audienceRole}</span>
                       {q.question}
+                      {guidance && <HelpTooltip text={guidance} />}
                     </p>
                     <textarea
                       className="input mt-2 min-h-[50px]"

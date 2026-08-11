@@ -8,8 +8,9 @@ import {
   resolveCrossStandardEquivalents
 } from '@shared/knowledge-base'
 import { getObligationsForClause } from '@shared/engine/compliance'
+import { getEvidenceGuidance } from '@shared/knowledge-base/evidenceGuidance'
 import type { Clause, StandardId } from '@shared/types'
-import { ClauseChip, useCurrentAuditProject } from '../../components/common'
+import { ClauseChip, HelpTooltip, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { newId } from '@shared/id'
 
@@ -213,14 +214,18 @@ export default function ClauseExplorerPage(): JSX.Element {
               )}
               {activeTab === 'Likely questions' && (
                 <ul className="space-y-2">
-                  {selected.interviewQuestions.map((q, i) => (
-                    <li key={i} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50">
-                      <span className="chip mr-2 bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-                        {q.audienceRole}
-                      </span>
-                      {q.question}
-                    </li>
-                  ))}
+                  {selected.interviewQuestions.map((q, i) => {
+                    const guidance = getEvidenceGuidance(selected.id, i)
+                    return (
+                      <li key={i} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50">
+                        <span className="chip mr-2 bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                          {q.audienceRole}
+                        </span>
+                        {q.question}
+                        {guidance && <HelpTooltip text={guidance} />}
+                      </li>
+                    )
+                  })}
                   {selected.interviewQuestions.length === 0 && <p className="text-slate-400">No specific questions authored.</p>}
                 </ul>
               )}

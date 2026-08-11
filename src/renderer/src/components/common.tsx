@@ -147,6 +147,29 @@ export function ClauseLinkList({ clauseIds, onRemove }: { clauseIds: string[]; o
   )
 }
 
+/** Small "?" button that reveals a text hint on hover — used for evidence
+ * examples next to a question, without needing a modal or extra click. */
+export function HelpTooltip({ text, label = 'Evidence example' }: { text: string; label?: string }): JSX.Element {
+  return (
+    <span className="group relative inline-flex align-middle">
+      <button
+        type="button"
+        className="ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 text-[10px] font-semibold leading-none text-slate-500 hover:border-brand-500 hover:text-brand-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-brand-400 dark:hover:text-brand-400"
+        aria-label={label}
+      >
+        ?
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-64 -translate-x-1/2 rounded-lg bg-slate-900 p-2 text-left text-xs font-normal normal-case leading-relaxed text-white shadow-lg group-hover:block dark:bg-slate-700"
+      >
+        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</span>
+        {text}
+      </span>
+    </span>
+  )
+}
+
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: JSX.Element }): JSX.Element {
   return (
     <div className="card flex flex-col items-center gap-3 py-16 text-center">

@@ -137,12 +137,18 @@ this does and doesn't protect against**. Two things worth knowing up front:
 2. **Audit Wizard** — click **Start Audit Plan** on the Dashboard to set
    the standard(s), scope, sites/departments, dates and team once, then
    the wizard walks you through every in-scope clause one at a time: its
-   context (requirement, explanation, what the auditor checks for), a
-   handful of **questions you may be asked** for that clause — each with
-   a box for your answer and a place to paste the evidence's file
-   location (a path, folder, or link) so you can find it fast when asked
-   — the evidence to gather (auto-generated per clause, with status/owner/
-   notes), and your rating/narrative/recommended action — with a live
+   context (requirement, explanation, what the auditor checks for); a
+   handful of **questions you may be asked** for that clause, each with
+   a box for your answer, a place to paste the evidence's file location
+   (a path, folder, or link) so you can find it fast when asked, and a
+   **?** button you can hover for an example of how that's typically
+   evidenced — written for a corporate-office facilities management
+   context specifically (cleaning/security/M&E contractors, landlord/
+   shared-building arrangements, legionella/fire/DSE/statutory inspection
+   records, SECR/ESOS reporting) rather than a generic manufacturing
+   checklist, see `src/shared/knowledge-base/evidenceGuidance.ts`; the
+   evidence to gather (auto-generated per clause, with status/owner/
+   notes); and your rating/narrative/recommended action — with a live
    readiness score in the header. A clause rated Minor/Major NC is
    automatically raised as a finding. The last step shows the final
    readiness score and an **action plan** assembled automatically from
