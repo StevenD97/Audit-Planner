@@ -174,8 +174,9 @@ function ContextStep({
       <WizardProgress label="Step 1 — Context &amp; standards" />
       <h1 className="text-2xl font-bold">{project ? 'Edit audit context' : 'Start Audit Plan'}</h1>
       <p className="text-sm text-slate-500">
-        Set the scope once here, then the wizard walks you through every in-scope clause — context, evidence and your
-        assessment — building the readiness score and action plan as you go.
+        Set the scope once here, then work through every in-scope clause to get audit-ready — what the auditor will be
+        checking for, the evidence to have on hand, and your own honest self-assessment — building your readiness
+        score and action plan as you go.
       </p>
 
       <section className="card space-y-3">
@@ -283,7 +284,12 @@ function ContextStep({
               </option>
             ))}
           </select>
-          <input className="input" placeholder="Lead auditor" value={leadAuditor} onChange={(e) => setLeadAuditor(e.target.value)} />
+          <input
+            className="input"
+            placeholder="Lead auditor (visiting)"
+            value={leadAuditor}
+            onChange={(e) => setLeadAuditor(e.target.value)}
+          />
           <input className="input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           <input
             className="input"
@@ -299,7 +305,7 @@ function ContextStep({
 
       <div className="flex justify-end">
         <button className="btn-primary" onClick={onNext}>
-          Next: walk through clauses →
+          Next: start self-assessment →
         </button>
       </div>
     </div>
@@ -407,7 +413,7 @@ function ClauseStep({
           auditProjectId: project.id,
           clauseId: clause.id,
           category: rating,
-          description: ga?.narrative?.trim() || 'Nonconformity identified during audit wizard walkthrough.',
+          description: ga?.narrative?.trim() || 'Gap self-identified during audit preparation — close before the audit.',
           raisedAt: nowIso()
         }
         await upsertEntity('audit_findings', { auditProjectId: project.id }, finding)
@@ -484,11 +490,11 @@ function ClauseStep({
             <p className="text-sm">{clause.explanation}</p>
           </div>
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase text-slate-400">Audit intent</p>
+            <p className="mb-1 text-xs font-semibold uppercase text-slate-400">What the auditor checks for</p>
             <p className="text-sm">{clause.auditIntent}</p>
           </div>
           {clause.processOwnerRoles.length > 0 && (
-            <p className="text-xs text-slate-500">Typical process owners: {clause.processOwnerRoles.join(', ')}</p>
+            <p className="text-xs text-slate-500">Who usually owns this: {clause.processOwnerRoles.join(', ')}</p>
           )}
           {clause.mandatoryDocumentedInfo.length > 0 && (
             <div>
@@ -504,7 +510,7 @@ function ClauseStep({
           )}
           {clause.interviewQuestions.length > 0 && (
             <div>
-              <p className="mb-1 text-xs font-semibold uppercase text-slate-400">Interview questions</p>
+              <p className="mb-1 text-xs font-semibold uppercase text-slate-400">Questions you may be asked</p>
               <ul className="space-y-1 text-sm">
                 {clause.interviewQuestions.map((q, i) => (
                   <li key={i} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50">
@@ -566,7 +572,11 @@ function ClauseStep({
         </section>
 
         <section className="card space-y-3">
-          <h2 className="text-lg font-semibold">Explanation &amp; rating</h2>
+          <h2 className="text-lg font-semibold">Self-assessment</h2>
+          <p className="text-xs text-slate-500">
+            Rate this honestly against what the auditor would actually find today — this is how you find the gaps
+            before they do.
+          </p>
           <div className="flex flex-wrap gap-2">
             {RATINGS.map((r) => (
               <button key={r.key} onClick={() => setRating(r.key)} className={ga?.rating === r.key ? '' : 'opacity-40 hover:opacity-100'}>
@@ -575,10 +585,10 @@ function ClauseStep({
             ))}
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-slate-400">Narrative</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-slate-400">Notes</label>
             <textarea
               className="input min-h-[60px]"
-              placeholder="What did you observe? Why does this rating apply?"
+              placeholder="What's the current state here? Why does this rating apply?"
               value={ga?.narrative ?? ''}
               onChange={(e) => updateField({ narrative: e.target.value })}
             />
@@ -587,7 +597,7 @@ function ClauseStep({
             <label className="mb-1 block text-xs font-semibold uppercase text-slate-400">Recommended action</label>
             <textarea
               className="input min-h-[60px]"
-              placeholder="What needs to happen to close this gap? (feeds the action plan)"
+              placeholder="What needs to happen before the audit to close this gap? (feeds the action plan)"
               value={ga?.recommendedAction ?? ''}
               onChange={(e) => updateField({ recommendedAction: e.target.value })}
             />
@@ -612,7 +622,7 @@ function ClauseStep({
             ← Previous
           </button>
           <button className="btn-primary" onClick={onNext}>
-            {index < clauses.length - 1 ? 'Next clause →' : 'Finish walkthrough →'}
+            {index < clauses.length - 1 ? 'Next clause →' : 'Finish self-assessment →'}
           </button>
         </div>
       </div>
@@ -676,8 +686,8 @@ function CompleteStep({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <WizardProgress label="Walkthrough complete" />
-      <h1 className="text-2xl font-bold">{project.name} — ready to complete</h1>
+      <WizardProgress label="Self-assessment complete" />
+      <h1 className="text-2xl font-bold">{project.name} — your audit-readiness summary</h1>
 
       <div className="card flex flex-col items-center py-8">
         <p className="text-sm text-slate-500">Overall readiness</p>
@@ -690,11 +700,11 @@ function CompleteStep({
       <div className="card">
         <h2 className="mb-1 text-lg font-semibold">Action plan</h2>
         <p className="mb-3 text-sm text-slate-500">
-          Assembled automatically from what you entered while walking through each clause — every clause rated below
-          &quot;Conforms&quot;, with its recommended action and whether a finding was raised.
+          Assembled automatically from your self-assessment — every clause rated below &quot;Conforms&quot;, with the
+          action needed to close it before the audit and whether it's being tracked as a finding.
         </p>
         {actionPlan.length === 0 ? (
-          <p className="text-sm text-slate-400">Every assessed clause conforms — nothing outstanding.</p>
+          <p className="text-sm text-slate-400">Every assessed clause conforms — you're in good shape here.</p>
         ) : (
           <div className="space-y-2">
             {actionPlan.map(({ clause, ga }) => {

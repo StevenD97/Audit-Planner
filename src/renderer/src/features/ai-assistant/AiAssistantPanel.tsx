@@ -11,13 +11,13 @@ const ai = getActiveProvider()
 type ActionKey = 'questions' | 'trails' | 'weak' | 'interviewPlan' | 'missingEvidence' | 'agenda' | 'patterns'
 
 const ACTIONS: { key: ActionKey; label: string }[] = [
-  { key: 'questions', label: 'Recommend audit questions' },
-  { key: 'trails', label: 'Suggest audit trails' },
-  { key: 'weak', label: 'Identify likely weak areas' },
-  { key: 'interviewPlan', label: 'Generate an interview plan' },
+  { key: 'questions', label: 'What might I be asked?' },
+  { key: 'trails', label: 'Likely audit trails' },
+  { key: 'weak', label: 'Where am I weakest?' },
+  { key: 'interviewPlan', label: 'Prep my team for interviews' },
   { key: 'missingEvidence', label: 'What evidence is missing?' },
-  { key: 'agenda', label: "Generate today's agenda" },
-  { key: 'patterns', label: 'Analyse patterns & recurrence' }
+  { key: 'agenda', label: 'My audit-day schedule' },
+  { key: 'patterns', label: 'Recurring issues to get ahead of' }
 ]
 
 export default function AiAssistantPanel({ onClose }: { onClose: () => void }): JSX.Element {

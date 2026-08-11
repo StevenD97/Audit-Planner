@@ -13,7 +13,16 @@ import { ClauseChip, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { newId } from '@shared/id'
 
-const TABS = ['Requirement', 'Explanation', 'Audit intent', 'Evidence', 'Questions', 'Findings', 'Related', 'Legal'] as const
+const TABS = [
+  'Requirement',
+  'Explanation',
+  'What auditors check for',
+  'Evidence',
+  'Likely questions',
+  'Common findings',
+  'Related',
+  'Legal'
+] as const
 
 export default function ClauseExplorerPage(): JSX.Element {
   const [params, setParams] = useSearchParams()
@@ -139,7 +148,7 @@ export default function ClauseExplorerPage(): JSX.Element {
             <div className="text-sm leading-relaxed">
               {activeTab === 'Requirement' && <p>{selected.requirementSummary}</p>}
               {activeTab === 'Explanation' && <p>{selected.explanation}</p>}
-              {activeTab === 'Audit intent' && (
+              {activeTab === 'What auditors check for' && (
                 <div className="space-y-3">
                   <p>{selected.auditIntent}</p>
                   {selected.processOwnerRoles.length > 0 && (
@@ -202,7 +211,7 @@ export default function ClauseExplorerPage(): JSX.Element {
                   </div>
                 </div>
               )}
-              {activeTab === 'Questions' && (
+              {activeTab === 'Likely questions' && (
                 <ul className="space-y-2">
                   {selected.interviewQuestions.map((q, i) => (
                     <li key={i} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50">
@@ -215,7 +224,7 @@ export default function ClauseExplorerPage(): JSX.Element {
                   {selected.interviewQuestions.length === 0 && <p className="text-slate-400">No specific questions authored.</p>}
                 </ul>
               )}
-              {activeTab === 'Findings' && (
+              {activeTab === 'Common findings' && (
                 <ul className="space-y-2">
                   {selected.potentialFindings.map((f, i) => (
                     <li key={i}>

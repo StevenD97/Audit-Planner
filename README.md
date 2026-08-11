@@ -1,11 +1,12 @@
 # Audit Planner
 
-A desktop application that helps a SHE Coordinator **plan and prepare**
-internal/external audits against **ISO 14001** (Environmental Management
-Systems) and **ISO 45001** (Occupational Health & Safety Management
-Systems) — not just a checklist, but a knowledge-graph-driven planning tool
-covering evidence requirements, interview questions, audit trails, gap
-assessment, readiness scoring and report generation.
+A desktop application that helps a **SHE Advisor get ready to be audited**
+against **ISO 14001** (Environmental Management Systems) and **ISO 45001**
+(Occupational Health & Safety Management Systems) — not just a checklist,
+but a knowledge-graph-driven self-assessment tool covering the evidence
+you'll need to have on hand, the questions you're likely to be asked, the
+gaps to close before the auditor arrives, a readiness score, and an
+action plan.
 
 See `docs/ARCHITECTURE.md`, `docs/DATABASE_SCHEMA.md`, `docs/UI_DESIGN.md`
 and `docs/ROADMAP.md` for the full design rationale, explicit assumptions
