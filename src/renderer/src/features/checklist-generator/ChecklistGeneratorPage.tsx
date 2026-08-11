@@ -113,7 +113,8 @@ export default function ChecklistGeneratorPage(): JSX.Element {
                   <th>Clause</th>
                   <th>Risk</th>
                   <th>Status</th>
-                  <th>Response / evidence notes</th>
+                  <th>Your answer</th>
+                  <th>Evidence location</th>
                   <th></th>
                 </tr>
               </thead>
@@ -141,8 +142,17 @@ export default function ChecklistGeneratorPage(): JSX.Element {
                       <td>
                         <textarea
                           className="input min-h-[40px]"
+                          placeholder="Your answer…"
                           value={item.response ?? ''}
                           onChange={(e) => upsertChecklistItem({ ...item, response: e.target.value })}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="input"
+                          placeholder="File path, folder, or link"
+                          value={item.evidenceLocation ?? ''}
+                          onChange={(e) => upsertChecklistItem({ ...item, evidenceLocation: e.target.value })}
                         />
                       </td>
                       <td>

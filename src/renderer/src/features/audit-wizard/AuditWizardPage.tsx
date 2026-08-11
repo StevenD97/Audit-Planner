@@ -3,10 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { newId } from '@shared/id'
 import { getAuditableClauses } from '@shared/knowledge-base'
 import { computeOverallReadinessV2, type ScoringV2Context } from '@shared/engine/scoringV2'
+import { riskWeightToLevel } from '@shared/engine/scoring'
 import type {
   AuditFinding,
   AuditProject,
   AuditType,
+  ChecklistItem,
   Clause,
   Department,
   EvidenceStatus,
@@ -335,17 +337,58 @@ function ClauseStep({
   const upsertGapAssessment = useWorkspaceStore((s) => s.upsertGapAssessment)
   const upsertEvidenceItem = useWorkspaceStore((s) => s.upsertEvidenceItem)
   const bulkUpsertEvidenceItems = useWorkspaceStore((s) => s.bulkUpsertEvidenceItems)
+  const upsertChecklistItem = useWorkspaceStore((s) => s.upsertChecklistItem)
   const upsertEntity = useWorkspaceStore((s) => s.upsertEntity)
 
   const gapAssessments = workspace?.gapAssessments ?? []
   const evidenceItems = workspace?.evidencePlanItems ?? []
   const auditFindings = workspace?.auditFindings ?? []
+  const checklistItems = workspace?.checklistItems ?? []
 
   const ga = gapAssessments.find((g) => g.auditProjectId === project.id && g.clauseId === clause.id)
   const clauseEvidence = useMemo(
     () => evidenceItems.filter((e) => e.auditProjectId === project.id && e.clauseId === clause.id),
     [evidenceItems, project.id, clause.id]
   )
+  const clauseChecklist = useMemo(
+    () => checklistItems.filter((c) => c.auditProjectId === project.id && c.clauseId === clause.id),
+    [checklistItems, project.id, clause.id]
+  )
+
+  // Question -> checklist item id, resolved once and reused for every edit to
+  // that question. Without this, two edits fired close together (e.g. a
+  // clear-then-set from a form-fill, or just fast typing before the store's
+  // async refresh lands) would each compute "no existing item yet" from the
+  // same stale clauseChecklist and mint two different ids for one question.
+  const checklistIdsRef = useRef<Map<string, string>>(new Map())
+
+  function resolveChecklistId(question: string): string {
+    const key = `${clause.id}:${question}`
+    const cached = checklistIdsRef.current.get(key)
+    if (cached) return cached
+    const id = clauseChecklist.find((c) => c.question === question)?.id ?? newId()
+    checklistIdsRef.current.set(key, id)
+    return id
+  }
+
+  async function saveAnswer(question: string, patch: Partial<{ response: string; evidenceLocation: string }>): Promise<void> {
+    const id = resolveChecklistId(question)
+    const existing = clauseChecklist.find((c) => c.id === id)
+    const response = patch.response ?? existing?.response ?? ''
+    const maxWeight = Math.max(1, ...clause.riskPrompts.map((r) => r.riskWeight))
+    const item: ChecklistItem = {
+      id,
+      auditProjectId: project.id,
+      clauseId: clause.id,
+      question,
+      riskLevel: existing?.riskLevel ?? riskWeightToLevel(maxWeight),
+      process: existing?.process ?? clause.processOwnerRoles[0],
+      status: response.trim() ? 'answered' : 'pending',
+      response: patch.response ?? existing?.response,
+      evidenceLocation: patch.evidenceLocation ?? existing?.evidenceLocation
+    }
+    await upsertChecklistItem(item)
+  }
 
   // Auto-generate evidence rows for this clause the first time it's visited.
   // Guarded synchronously (not via the async clauseEvidence read) so a
@@ -508,20 +551,41 @@ function ClauseStep({
               </ul>
             </div>
           )}
-          {clause.interviewQuestions.length > 0 && (
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase text-slate-400">Questions you may be asked</p>
-              <ul className="space-y-1 text-sm">
-                {clause.interviewQuestions.map((q, i) => (
-                  <li key={i} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50">
-                    <span className="chip mr-2 bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">{q.audienceRole}</span>
-                    {q.question}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </section>
+
+        {clause.interviewQuestions.length > 0 && (
+          <section className="card space-y-3">
+            <div>
+              <h2 className="text-lg font-semibold">Questions you may be asked</h2>
+              <p className="text-xs text-slate-500">Answer each one now, and note where the evidence backing it lives.</p>
+            </div>
+            <div className="space-y-3">
+              {clause.interviewQuestions.map((q, i) => {
+                const item = clauseChecklist.find((c) => c.question === q.question)
+                return (
+                  <div key={i} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-700/50">
+                    <p className="text-sm">
+                      <span className="chip mr-2 bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">{q.audienceRole}</span>
+                      {q.question}
+                    </p>
+                    <textarea
+                      className="input mt-2 min-h-[50px]"
+                      placeholder="Your answer…"
+                      value={item?.response ?? ''}
+                      onChange={(e) => saveAnswer(q.question, { response: e.target.value })}
+                    />
+                    <input
+                      className="input mt-2"
+                      placeholder="Evidence file location (e.g. a file path, folder, or link)"
+                      value={item?.evidenceLocation ?? ''}
+                      onChange={(e) => saveAnswer(q.question, { evidenceLocation: e.target.value })}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         <section className="card space-y-2">
           <h2 className="text-lg font-semibold">Evidence</h2>

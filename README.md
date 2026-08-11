@@ -137,8 +137,11 @@ this does and doesn't protect against**. Two things worth knowing up front:
 2. **Audit Wizard** — click **Start Audit Plan** on the Dashboard to set
    the standard(s), scope, sites/departments, dates and team once, then
    the wizard walks you through every in-scope clause one at a time: its
-   context (requirement, explanation, audit intent, interview questions),
-   the evidence to gather (auto-generated per clause, with status/owner/
+   context (requirement, explanation, what the auditor checks for), a
+   handful of **questions you may be asked** for that clause — each with
+   a box for your answer and a place to paste the evidence's file
+   location (a path, folder, or link) so you can find it fast when asked
+   — the evidence to gather (auto-generated per clause, with status/owner/
    notes), and your rating/narrative/recommended action — with a live
    readiness score in the header. A clause rated Minor/Major NC is
    automatically raised as a finding. The last step shows the final
@@ -197,7 +200,8 @@ this does and doesn't protect against**. Two things worth knowing up front:
    walkthrough) but reachable any time via global search: `Ctrl/Cmd+K`.
 9. **Checklist Generator** / **Evidence Planner** — bulk, filterable views
    over the same checklist/evidence data the Audit Wizard creates per
-   clause as you walk through it; useful for cross-clause filtering by
+   clause as you walk through it — including your answers and their
+   evidence file locations — useful for cross-clause filtering by
    risk/process or reviewing everything outstanding at a glance. Not in
    the sidebar (the wizard is the primary path in) but still directly
    reachable, including via clause links and global search.

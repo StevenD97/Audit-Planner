@@ -179,7 +179,8 @@ export interface ChecklistItem {
   process?: string
   status: ChecklistStatus
   response?: string
-  evidenceNotes?: string
+  /** Where to find the evidence backing this answer — a file path, folder, or link. */
+  evidenceLocation?: string
 }
 
 export type EvidenceStatus = 'requested' | 'obtained' | 'not_available' | 'not_applicable'
