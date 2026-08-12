@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { GapRating, RiskLevel } from '@shared/types'
+import type { BuildingOwnership, GapRating, RiskLevel } from '@shared/types'
 import { searchClauses, getClauseById } from '@shared/knowledge-base'
 import { useWorkspaceStore } from '../store/workspaceStore'
 
@@ -167,6 +167,73 @@ export function HelpTooltip({ text, label = 'Evidence example' }: { text: string
         {text}
       </span>
     </span>
+  )
+}
+
+const OWNERSHIP_LABELS: Record<BuildingOwnership, string> = {
+  owned: 'Owned outright',
+  leased: 'Leased',
+  multi_tenant: 'Multi-tenant / shared building'
+}
+
+/** Compact reference card showing the organisation's own facts (set once on
+ * the Organisation Profile page) — shown alongside generic evidence
+ * examples and recommendations so they can be read against what's actually
+ * true here, not a generic office. Self-contained: reads the workspace
+ * directly, so it can be dropped into any screen with no props. */
+export function OrganisationContextSummary(): JSX.Element {
+  const workspace = useWorkspaceStore((s) => s.workspace)
+  const context = workspace?.organisationContext[0]
+
+  const hasContent =
+    context &&
+    (context.organisationName ||
+      context.sector ||
+      context.buildingOwnership ||
+      context.approximateHeadcount ||
+      context.numberOfFloors ||
+      context.notableFacilities.length > 0 ||
+      context.keyContractors.length > 0 ||
+      context.additionalContext)
+
+  if (!hasContent) {
+    return (
+      <div className="rounded-lg border border-dashed border-slate-300 p-3 text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
+        <Link to="/organisation" className="font-medium text-brand-600 hover:underline dark:text-brand-400">
+          Add your organisation profile
+        </Link>{' '}
+        to see your own facts alongside these examples and recommendations.
+      </div>
+    )
+  }
+
+  const headline = [
+    context.organisationName,
+    context.sector,
+    context.buildingOwnership && OWNERSHIP_LABELS[context.buildingOwnership],
+    context.approximateHeadcount && `~${context.approximateHeadcount} staff`,
+    context.numberOfFloors && `${context.numberOfFloors} floor(s)/site(s)`
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  return (
+    <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3 text-xs dark:border-brand-800 dark:bg-brand-900/10">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-400">Your organisation</p>
+        <Link to="/organisation" className="text-brand-600 hover:underline dark:text-brand-400">
+          Edit →
+        </Link>
+      </div>
+      {headline && <p className="text-slate-600 dark:text-slate-300">{headline}</p>}
+      {context.notableFacilities.length > 0 && (
+        <p className="mt-1 text-slate-500 dark:text-slate-400">Facilities: {context.notableFacilities.join(', ')}</p>
+      )}
+      {context.keyContractors.length > 0 && (
+        <p className="mt-1 text-slate-500 dark:text-slate-400">Contractors: {context.keyContractors.join(', ')}</p>
+      )}
+      {context.additionalContext && <p className="mt-1 italic text-slate-500 dark:text-slate-400">{context.additionalContext}</p>}
+    </div>
   )
 }
 

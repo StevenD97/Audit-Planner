@@ -472,3 +472,30 @@ export interface CalendarEvent {
   category: CalendarEventCategory
   auditProjectId?: string
 }
+
+// ---- Organisation context (single profile per workspace) ----
+
+export type BuildingOwnership = 'owned' | 'leased' | 'multi_tenant'
+
+/**
+ * Your organisation's own facts — set once, referenced everywhere the audit
+ * planner shows an example or a recommendation, so generic ISO guidance can
+ * be read against what's actually true here. Singleton: exactly one row per
+ * workspace, always upserted with the same id (see ORGANISATION_CONTEXT_ID
+ * in the OrganisationContextPage) rather than a list the user manages.
+ */
+export interface OrganisationContext {
+  id: string
+  organisationName?: string
+  sector?: string
+  buildingOwnership?: BuildingOwnership
+  approximateHeadcount?: number
+  numberOfFloors?: number
+  /** e.g. canteen, lifts, generators/UPS, car park, plant rooms, server room, loading bay, EV charging */
+  notableFacilities: string[]
+  /** e.g. cleaning, security, catering, M&E, waste, landscaping, pest control */
+  keyContractors: string[]
+  /** Free text — other external/internal issues (ISO 4.1-style context) not captured by the fields above. */
+  additionalContext?: string
+  updatedAt: string
+}

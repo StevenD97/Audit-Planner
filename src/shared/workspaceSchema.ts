@@ -215,4 +215,11 @@ CREATE TABLE IF NOT EXISTS calendar_events (
   data TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON calendar_events(date);
+
+-- Singleton: exactly one row, always upserted with the same id. See
+-- OrganisationContext in shared/types.ts.
+CREATE TABLE IF NOT EXISTS organisation_context (
+  id TEXT PRIMARY KEY,
+  data TEXT NOT NULL
+);
 `

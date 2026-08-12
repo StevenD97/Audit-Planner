@@ -3,7 +3,7 @@ import { newId } from '@shared/id'
 import { getAuditableClauses, getClauseById } from '@shared/knowledge-base'
 import { getActiveProvider } from '@shared/engine/ai'
 import type { RecommenderContext } from '@shared/engine/recommender'
-import { ClauseChip, useCurrentAuditProject } from '../../components/common'
+import { ClauseChip, OrganisationContextSummary, useCurrentAuditProject } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 
 const ai = getActiveProvider()
@@ -59,6 +59,9 @@ export default function AiAssistantPanel({ onClose }: { onClose: () => void }): 
         <div className="p-4 text-sm text-slate-500">Select an audit project elsewhere in the app to use the assistant.</div>
       ) : (
         <>
+          <div className="p-3 pb-0">
+            <OrganisationContextSummary />
+          </div>
           <div className="grid grid-cols-2 gap-2 p-3">
             {ACTIONS.map((a) => (
               <button

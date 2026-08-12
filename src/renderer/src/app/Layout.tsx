@@ -11,6 +11,7 @@ import PassphraseModal from '../components/PassphraseModal'
 // routes still exist for direct/deep-linked access (e.g. clause search).
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/organisation', label: 'Organisation Profile' },
   { to: '/calendar', label: 'Calendar' },
   { to: '/processes', label: 'Process Explorer' },
   { to: '/legal', label: 'Legal & Compliance' },

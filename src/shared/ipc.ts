@@ -24,7 +24,8 @@ import type {
   SamplingPlan,
   MaturityAssessment,
   MaturityDimensionScore,
-  CalendarEvent
+  CalendarEvent,
+  OrganisationContext
 } from './types'
 import type { ExportDocument } from './export'
 import type { EntityTable } from './workspaceEntities'
@@ -59,6 +60,7 @@ export interface WorkspaceState {
   maturityAssessments: MaturityAssessment[]
   maturityDimensionScores: MaturityDimensionScore[]
   calendarEvents: CalendarEvent[]
+  organisationContext: OrganisationContext[]
 }
 
 export interface OpenResult {

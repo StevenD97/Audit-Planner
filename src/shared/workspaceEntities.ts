@@ -29,6 +29,7 @@ export type EntityTable =
   | 'maturity_assessments'
   | 'maturity_dimension_scores'
   | 'calendar_events'
+  | 'organisation_context'
 
 const EXTRA_COLUMNS: Record<EntityTable, string[]> = {
   audit_projects: ['status', 'updated_at'],
@@ -56,7 +57,8 @@ const EXTRA_COLUMNS: Record<EntityTable, string[]> = {
   sampling_plans: ['audit_project_id'],
   maturity_assessments: ['audit_project_id'],
   maturity_dimension_scores: ['assessment_id'],
-  calendar_events: ['date']
+  calendar_events: ['date'],
+  organisation_context: []
 }
 
 function toCamel(snake: string): string {

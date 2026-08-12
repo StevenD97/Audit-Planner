@@ -38,7 +38,8 @@ function buildState(ws: BrowserWorkspace): WorkspaceState {
     samplingPlans: ws.getAll('sampling_plans'),
     maturityAssessments: ws.getAll('maturity_assessments'),
     maturityDimensionScores: ws.getAll('maturity_dimension_scores'),
-    calendarEvents: ws.getAll('calendar_events')
+    calendarEvents: ws.getAll('calendar_events'),
+    organisationContext: ws.getAll('organisation_context')
   }
 }
 

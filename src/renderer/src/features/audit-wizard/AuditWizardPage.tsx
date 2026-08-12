@@ -18,7 +18,7 @@ import type {
   Site,
   StandardId
 } from '@shared/types'
-import { HelpTooltip, RatingBadge } from '../../components/common'
+import { HelpTooltip, OrganisationContextSummary, RatingBadge } from '../../components/common'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 
 const STANDARD_OPTIONS: { id: StandardId; label: string; description: string }[] = [
@@ -181,6 +181,8 @@ function ContextStep({
         checking for, the evidence to have on hand, and your own honest self-assessment — building your readiness
         score and action plan as you go.
       </p>
+
+      <OrganisationContextSummary />
 
       <section className="card space-y-3">
         <h2 className="text-lg font-semibold">Standard(s)</h2>
@@ -558,8 +560,12 @@ function ClauseStep({
           <section className="card space-y-3">
             <div>
               <h2 className="text-lg font-semibold">Questions you may be asked</h2>
-              <p className="text-xs text-slate-500">Answer each one now, and note where the evidence backing it lives.</p>
+              <p className="text-xs text-slate-500">
+                Answer each one now, and note where the evidence backing it lives. The <strong>?</strong> on each
+                question gives a generic example — read it against your own facts below.
+              </p>
             </div>
+            <OrganisationContextSummary />
             <div className="space-y-3">
               {clause.interviewQuestions.map((q, i) => {
                 const item = clauseChecklist.find((c) => c.question === q.question)
