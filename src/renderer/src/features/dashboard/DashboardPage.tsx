@@ -19,6 +19,21 @@ function readinessFor(project: AuditProject, gapAssessments: GapAssessment[]) {
   return computeReadiness(clauses, gaps)
 }
 
+/** Where "Open" should resume the wizard: the first clause that hasn't been
+ * self-assessed yet, or the completion summary if every clause already has
+ * a real rating. Never the context step — that's only for setting up a new
+ * audit, not for reopening one whose context is already filled in. */
+function resumeStepFor(project: AuditProject, gapAssessments: GapAssessment[]): string {
+  const clauses = project.standards.flatMap((s) => getAuditableClauses(s))
+  if (clauses.length === 0) return 'complete'
+  const gaps = gapAssessments.filter((g) => g.auditProjectId === project.id)
+  const firstUnassessed = clauses.find((c) => {
+    const rating = gaps.find((g) => g.clauseId === c.id)?.rating
+    return !rating || rating === 'not_assessed'
+  })
+  return firstUnassessed?.id ?? 'complete'
+}
+
 export default function DashboardPage(): JSX.Element {
   const workspace = useWorkspaceStore((s) => s.workspace)
   const createAuditProject = useWorkspaceStore((s) => s.createAuditProject)
@@ -93,7 +108,7 @@ export default function DashboardPage(): JSX.Element {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold text-brand-600 dark:text-brand-400">{r.overallPct}% ready</span>
-                      <Link to={`/programme?project=${p.id}`} className="btn-secondary">
+                      <Link to={`/wizard?project=${p.id}&step=${resumeStepFor(p, gapAssessments)}`} className="btn-secondary">
                         Open
                       </Link>
                       <button className="btn-ghost text-status-major hover:bg-status-major/10" onClick={() => deleteAudit(p)}>
